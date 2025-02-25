@@ -26,7 +26,7 @@ class Monster:
         self.cow = name
 
     def say(self):
-        print(cowsay.cowsay(self.phrase))
+        print(cowsay.cowsay(self.phrase, cow=self.cow))
 
 class Game:
     def __init__(self):
