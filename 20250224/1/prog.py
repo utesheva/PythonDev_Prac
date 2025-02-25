@@ -1,5 +1,6 @@
 import cowsay
 import re
+import sys
 
 class Player:
     def __init__(self):
@@ -36,8 +37,8 @@ class Game:
 
     def play(self):
         player = Player()
-        while True:
-            s = input()
+        while s := sys.stdin.readline():
+            s = s[:-1]
             match s:
                 case ("up" | "down" | "left" | "right"):
                     player.move(s, self.size)
