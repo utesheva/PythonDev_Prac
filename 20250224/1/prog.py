@@ -52,8 +52,10 @@ class Game:
                     if x < 0 or x >= self.size or y < 0 or y >= self.size:
                         print("Invalid arguments")
                     else:
-                        self.monsters[(x, y)] = Monster(x, y, phrase)
                         print(f"Added monster to ({x}, {y}) saying {phrase}")
+                        if (x,y) in self.monsters: 
+                            print("Replaced the old monster")
+                        self.monsters[(x, y)] = Monster(x, y, phrase)
                 case _:
                     print("Invalid command")
 
