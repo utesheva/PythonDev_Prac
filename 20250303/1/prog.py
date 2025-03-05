@@ -33,11 +33,12 @@ class Player:
         print(f"Moved to ({self.x}, {self.y})")
 
 class Monster:
-    def __init__(self, x, y, name, phrase):
+    def __init__(self, x, y, name, phrase, hitpoints):
         self.x = x
         self.y = y
         self.phrase = phrase
         self.cow = name
+        self.hp = hitpoints
 
     def say(self):
         if self.cow == 'jgsbat':
@@ -56,24 +57,26 @@ class Game:
     def play(self):
         player = Player()
         while s := sys.stdin.readline():
-            s = shlex.split(s)
+            s = [int(i) if i.isdigit() else i for i in  shlex.split(s)]
             match s:
                 case (["up"] | ["down"] | ["left"] | ["right"]):
                     player.move(s[0], self.size)
                     if (player.x, player.y) in self.monsters:
                         self.encounter(player.x, player.y)
 
-                case ["addmon", str(name), str(x), str(y), str(phrase)] if x.isdigit() and y.isdigit():
-                    x, y = int(x), int(y)
-                    if x < 0 or x >= self.size or y < 0 or y >= self.size:
+                case (["addmon", str(name), 
+                       "hello", str(hello_string), 
+                       "hp", int(hitpoints), 
+                       "coords", int(x), int(y)]):
+                    if x < 0 or x >= self.size or y < 0 or y >= self.size or hitpoints <= 0:
                         print("Invalid arguments")
                     elif name not in cowsay.list_cows() and name != 'jgsbat':
                         print("Cannot add unknown monster")
                     else:
-                        print(f"Added monster {name} to ({x}, {y}) saying {phrase}")
+                        print(f"Added monster {name} to ({x}, {y}) saying {hello_string}")
                         if (x,y) in self.monsters:
                             print("Replaced the old monster")
-                        self.monsters[(x, y)] = Monster(x, y, name, phrase)
+                        self.monsters[(x, y)] = Monster(x, y, name, hello_string, hitpoints)
                 case ["addmon", *args]:
                     print("Invalid arguments")
                 case _:
