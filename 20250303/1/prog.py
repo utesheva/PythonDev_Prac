@@ -79,5 +79,7 @@ class Game:
                 case _:
                     print("Invalid command")
 
+print("<<< Welcome to Python-MUD 0.1 >>>")
 g = Game()
 g.play()
+
