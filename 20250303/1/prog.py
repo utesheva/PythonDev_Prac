@@ -2,6 +2,7 @@ import cowsay
 import re
 import sys
 from io import StringIO
+import shlex
 
 jgsbat = cowsay.read_dot_cow(StringIO(r"""
     ,_                    _,
@@ -55,17 +56,14 @@ class Game:
     def play(self):
         player = Player()
         while s := sys.stdin.readline():
-            s = s[:-1]
+            s = shlex.split(s)
             match s:
-                case ("up" | "down" | "left" | "right"):
-                    player.move(s, self.size)
+                case (["up"] | ["down"] | ["left"] | ["right"]):
+                    player.move(s[0], self.size)
                     if (player.x, player.y) in self.monsters:
                         self.encounter(player.x, player.y)
 
-                case x if x.split()[0] == "addmon":
-                    if not re.match(r"addmon .* \d+ \d+ .*", s):
-                        print("Invalid arguments")
-                    _, name, x, y, phrase = s.split()
+                case ["addmon", str(name), str(x), str(y), str(phrase)] if x.isdigit() and y.isdigit():
                     x, y = int(x), int(y)
                     if x < 0 or x >= self.size or y < 0 or y >= self.size:
                         print("Invalid arguments")
@@ -76,6 +74,8 @@ class Game:
                         if (x,y) in self.monsters:
                             print("Replaced the old monster")
                         self.monsters[(x, y)] = Monster(x, y, name, phrase)
+                case ["addmon", *args]:
+                    print("Invalid arguments")
                 case _:
                     print("Invalid command")
 
