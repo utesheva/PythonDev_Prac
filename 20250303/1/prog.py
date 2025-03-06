@@ -54,6 +54,15 @@ class Game:
     def encounter(self, x, y):
         self.monsters[(x,y)].say()
 
+    def parse_args(self, args, param):
+        args_parsed = {}
+        cur = ''
+        for i in param:
+            if i not in args:
+                return None
+            args_parsed[i] = args[args.index(i) + 1: args.index(i) + 1 + param[i]]
+        return args_parsed
+
     def play(self):
         player = Player()
         while s := sys.stdin.readline():
@@ -63,20 +72,23 @@ class Game:
                     player.move(s[0], self.size)
                     if (player.x, player.y) in self.monsters:
                         self.encounter(player.x, player.y)
-
-                case (["addmon", str(name), 
-                       "hello", str(hello_string), 
-                       "hp", int(hitpoints), 
-                       "coords", int(x), int(y)]):
-                    if x < 0 or x >= self.size or y < 0 or y >= self.size or hitpoints <= 0:
-                        print("Invalid arguments")
-                    elif name not in cowsay.list_cows() and name != 'jgsbat':
-                        print("Cannot add unknown monster")
+                case ["addmon", str(name), *args]:
+                    parsed_args = self.parse_args(args, {"hello": 1, "hp": 1, "coords": 2})
+                    if parsed_args:
+                        x, y = parsed_args['coords']
+                        hello_string = parsed_args['hello'][0]
+                        hitpoints = parsed_args['hp'][0]
+                        if x < 0 or x >= self.size or y < 0 or y >= self.size or hitpoints <= 0:
+                            print("Invalid arguments")
+                        elif name not in cowsay.list_cows() and name != 'jgsbat':
+                            print("Cannot add unknown monster")
+                        else:
+                            print(f"Added monster {name} to ({x}, {y}) saying {hello_string}")
+                            if (x,y) in self.monsters:
+                                print("Replaced the old monster")
+                            self.monsters[(x, y)] = Monster(x, y, name, hello_string, hitpoints)
                     else:
-                        print(f"Added monster {name} to ({x}, {y}) saying {hello_string}")
-                        if (x,y) in self.monsters:
-                            print("Replaced the old monster")
-                        self.monsters[(x, y)] = Monster(x, y, name, hello_string, hitpoints)
+                        print('Invalid arguments')
                 case ["addmon", *args]:
                     print("Invalid arguments")
                 case _:
