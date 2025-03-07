@@ -1,6 +1,19 @@
 import cowsay
 import re
 import sys
+from io import StringIO
+
+jgsbat = cowsay.read_dot_cow(StringIO(r"""
+    ,_                    _,
+    ) '-._  ,_    _,  _.-' (
+    )  _.-'.|\\\--//|.'-._  (
+     )'   .'\/o\/o\/'.   `(
+      ) .' . \====/ . '. (
+       )  / <<    >> \  (
+        '-._/``  ``\_.-'
+  jgs     __\\\'--'//__
+         (((""`  `"")))
+"""))
 
 class Player:
     def __init__(self):
@@ -26,7 +39,10 @@ class Monster:
         self.cow = name
 
     def say(self):
-        print(cowsay.cowsay(self.phrase, cow=self.cow))
+        if self.cow == 'jgsbat':
+            print(cowsay.cowsay(self.phrase, cowfile=jgsbat))
+        else:
+            print(cowsay.cowsay(self.phrase, cow=self.cow))
 
 class Game:
     def __init__(self):
@@ -53,7 +69,7 @@ class Game:
                     x, y = int(x), int(y)
                     if x < 0 or x >= self.size or y < 0 or y >= self.size:
                         print("Invalid arguments")
-                    elif name not in cowsay.list_cows():
+                    elif name not in cowsay.list_cows() and name != 'jgsbat':
                         print("Cannot add unknown monster")
                     else:
                         print(f"Added monster {name} to ({x}, {y}) saying {phrase}")
