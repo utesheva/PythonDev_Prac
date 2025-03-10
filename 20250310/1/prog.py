@@ -3,6 +3,7 @@ import re
 import sys
 from io import StringIO
 import shlex
+import cmd
 
 jgsbat = cowsay.read_dot_cow(StringIO(r"""
     ,_                    _,
@@ -63,15 +64,18 @@ class Game:
             args_parsed[i] = args[args.index(i) + 1: args.index(i) + 1 + param[i]]
         return args_parsed
 
+    def moving(self, player, direction):
+        player.move(direction, self.size)
+        if (player.x, player.y) in self.monsters:
+            self.encounter(player.x, player.y)
+
     def play(self):
         player = Player()
         while s := sys.stdin.readline():
             s = [int(i) if i.isdigit() else i for i in  shlex.split(s)]
             match s:
                 case (["up"] | ["down"] | ["left"] | ["right"]):
-                    player.move(s[0], self.size)
-                    if (player.x, player.y) in self.monsters:
-                        self.encounter(player.x, player.y)
+                    self.moving(player, s[0])
                 case ["addmon", str(name), *args]:
                     parsed_args = self.parse_args(args, {"hello": 1, "hp": 1, "coords": 2})
                     if parsed_args:
@@ -97,4 +101,3 @@ class Game:
 print("<<< Welcome to Python-MUD 0.1 >>>")
 g = Game()
 g.play()
-
