@@ -99,10 +99,14 @@ class Game:
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
 
     def attack(self, player):
-        if ((player.x, player.y) not in self.monsters or 
-            self.monsters[(player.x, player.y)] is None):
+        x, y = player.x, player.y
+        if ((x, y) not in self.monsters or 
+            self.monsters[(x, y)] is None):
             print("No monster here")
             return
+        damage = min(self.monsters[(x, y)].hp, 10)
+        self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
+        print(f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp")
 
 class cmd_play(cmd.Cmd):
     prompt = 'MUD> '
