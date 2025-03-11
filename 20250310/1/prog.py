@@ -98,17 +98,6 @@ class Game:
             print("Replaced the old monster")
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
 
-    def play(self):
-        player = Player()
-        while s := sys.stdin.readline():
-            match s:
-                case ("up\n" | "down\n" | "left\n" | "right\n"):
-                    self.moving(player, s[:-1])
-                case x if x.startswith("addmon"):
-                    self.add_monster(x[6:])
-                case _:
-                    print("Invalid command")
-
 class cmd_play(cmd.Cmd):
     prompt = 'MUD> '
     player = Player()
