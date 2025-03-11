@@ -55,7 +55,8 @@ class Game:
         self.monsters = {}
 
     def encounter(self, x, y):
-        self.monsters[(x,y)].say()
+        if self.monsters[(x, y)]:
+            self.monsters[(x, y)].say()
 
     def parse_args(self, args, param):
         args_parsed = {}
@@ -94,7 +95,7 @@ class Game:
             print("Cannot add unknown monster")
             return
         print(f"Added monster {name} to ({x}, {y}) saying {hello}")
-        if (x,y) in self.monsters and not self.monsters[(x,y)] is None:
+        if (x,y) in self.monsters and not(self.monsters[(x,y)] is None):
             print("Replaced the old monster")
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
 
@@ -109,8 +110,11 @@ class Game:
         print(f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp")
         if self.monsters[(x, y)].hp == 0:
             print(f"{self.monsters[(x, y)].cow} died")
+            self.monsters[(x, y)] = None
         else:
             print(f"{self.monsters[(x, y)].cow} now has {self.monsters[(x, y)].hp}")
+
+
 class cmd_play(cmd.Cmd):
     prompt = 'MUD> '
     player = Player()
