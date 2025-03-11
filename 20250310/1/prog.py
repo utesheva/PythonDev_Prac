@@ -98,6 +98,12 @@ class Game:
             print("Replaced the old monster")
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
 
+    def attack(self, player):
+        if ((player.x, player.y) not in self.monsters or 
+            self.monsters[(player.x, player.y)] is None):
+            print("No monster here")
+            return
+
 class cmd_play(cmd.Cmd):
     prompt = 'MUD> '
     player = Player()
@@ -132,6 +138,9 @@ class cmd_play(cmd.Cmd):
             self.game.moving(self.player, 'right')
         except Exception as e:
             print("Error: ", e)
+
+    def do_attack(self, args):
+        self.game.attack(self.player)
 
     def default(self, args):
         print("Invalid command")
