@@ -48,6 +48,8 @@ class Monster:
             print(cowsay.cowsay(self.phrase, cow=self.cow))
 
 class Game:
+    cows = cowsay.list_cows() + ['jgsbat']
+
     def __init__(self):
         self.size = 10
         self.monsters = {}
@@ -69,32 +71,41 @@ class Game:
         if (player.x, player.y) in self.monsters:
             self.encounter(player.x, player.y)
 
+    def add_monster(self, args):
+        preprocess = shlex.split(args)
+        name = preprocess[0]
+        parsed_args = self.parse_args(preprocess[1:], {"hello": 1, "hp": 1, "coords": 2})
+        if not parsed_args or len(preprocess) != 8:
+            print("Invalid arguments")
+            return
+        x, y = parsed_args['coords']
+        hello = parsed_args['hello'][0]
+        hp = parsed_args['hp'][0]
+        if (not x.isdigit() or 
+            not y.isdigit() or 
+            not hp.isdigit()):
+            print("Invalid arguments")
+            return
+        x, y, hp = map(int, [x, y, hp])
+        if x < 0 or x >= self.size or y < 0 or y >= self.size or hp <= 0:
+            print("Invalid arguments")
+            return
+        if name not in self.cows:
+            print("Cannot add unknown monster")
+            return
+        print(f"Added monster {name} to ({x}, {y}) saying {hello}")
+        if (x,y) in self.monsters and not self.monsters[(x,y)] is None:
+            print("Replaced the old monster")
+        self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
+
     def play(self):
         player = Player()
         while s := sys.stdin.readline():
-            s = [int(i) if i.isdigit() else i for i in  shlex.split(s)]
             match s:
-                case (["up"] | ["down"] | ["left"] | ["right"]):
-                    self.moving(player, s[0])
-                case ["addmon", str(name), *args]:
-                    parsed_args = self.parse_args(args, {"hello": 1, "hp": 1, "coords": 2})
-                    if parsed_args:
-                        x, y = parsed_args['coords']
-                        hello_string = parsed_args['hello'][0]
-                        hitpoints = parsed_args['hp'][0]
-                        if x < 0 or x >= self.size or y < 0 or y >= self.size or hitpoints <= 0:
-                            print("Invalid arguments")
-                        elif name not in cowsay.list_cows() and name != 'jgsbat':
-                            print("Cannot add unknown monster")
-                        else:
-                            print(f"Added monster {name} to ({x}, {y}) saying {hello_string}")
-                            if (x,y) in self.monsters:
-                                print("Replaced the old monster")
-                            self.monsters[(x, y)] = Monster(x, y, name, hello_string, hitpoints)
-                    else:
-                        print('Invalid arguments')
-                case ["addmon", *args]:
-                    print("Invalid arguments")
+                case ("up\n" | "down\n" | "left\n" | "right\n"):
+                    self.moving(player, s[:-1])
+                case x if x.startswith("addmon"):
+                    self.add_monster(x[6:])
                 case _:
                     print("Invalid command")
 
