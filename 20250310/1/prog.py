@@ -147,6 +147,19 @@ class cmd_play(cmd.Cmd):
     def default(self, args):
         print("Invalid command")
 
+    def complete_addmon(self, text, line, begidx, endidx):
+        words = (line[:endidx] + ".").split()
+        DICT = list({'hello', 'hp', 'coords'} - set(line[:endidx].split()))
+        if 'coords' in words and words[-2] != 'coords':
+            condition = (len(words) % 2 == 0)
+        else:
+            condition = (len(words) % 2 == 1)
+        if len(words) == 2:
+            DICT = Game.cows
+        elif not condition:
+            DICT = []
+        return [c for c in DICT if c.startswith(text)]
+
 if __name__ == '__main__':
     print("<<< Welcome to Python-MUD 0.1 >>>")
     cmd_play().cmdloop()
