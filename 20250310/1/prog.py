@@ -191,6 +191,16 @@ class cmd_play(cmd.Cmd):
             DICT = []
         return [c for c in DICT if c.startswith(text)]
 
+    def complete_attack(self, text, line, begidx, endidx):
+        words = (line[:endidx] + ".").split()
+        DICT = []
+        if len(words) == 2:
+            DICT = ['with']
+        elif len(words) == 3 and words[-2] == 'with':
+            DICT = ['sword', 'spear', 'axe']
+        return [c for c in DICT if c.startswith(text)]
+
+
 if __name__ == '__main__':
     print("<<< Welcome to Python-MUD 0.1 >>>")
     cmd_play().cmdloop()
