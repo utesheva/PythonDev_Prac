@@ -107,7 +107,10 @@ class Game:
         damage = min(self.monsters[(x, y)].hp, 10)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
         print(f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp")
-
+        if self.monsters[(x, y)].hp == 0:
+            print(f"{self.monsters[(x, y)].cow} died")
+        else:
+            print(f"{self.monsters[(x, y)].cow} now has {self.monsters[(x, y)].hp}")
 class cmd_play(cmd.Cmd):
     prompt = 'MUD> '
     player = Player()
