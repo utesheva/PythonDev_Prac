@@ -101,14 +101,9 @@ class Game:
 
     def attack(self, player, args='with sword'):
         x, y = player.x, player.y
-        if ((x, y) not in self.monsters or 
-            self.monsters[(x, y)] is None):
-            print("No monster here")
-            return
-
+         
         splitted = shlex.split(args)
         parsed_args = self.parse_args(splitted, {'with': 1})
-        print(splitted, parsed_args)
         if parsed_args:
             match parsed_args['with'][0]:
                 case 'sword':
@@ -124,6 +119,10 @@ class Game:
             print("Invalid arguments")
             return
 
+        if ((x, y) not in self.monsters or
+            self.monsters[(x, y)] is None):
+            print("No monster here")
+            return
         damage = min(self.monsters[(x, y)].hp, weapon)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
         print(f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp")
@@ -170,10 +169,13 @@ class cmd_play(cmd.Cmd):
             print("Error: ", e)
 
     def do_attack(self, args):
-        if args:
-            self.game.attack(self.player, args)
-        else:
-            self.game.attack(self.player)
+        try:
+            if args:
+                self.game.attack(self.player, args)
+            else:
+                self.game.attack(self.player)
+        except Exception as e:
+            print("Error: ", e)
 
     def default(self, args):
         print("Invalid command")
