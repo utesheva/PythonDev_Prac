@@ -109,6 +109,45 @@ class Game:
                 case _:
                     print("Invalid command")
 
-print("<<< Welcome to Python-MUD 0.1 >>>")
-g = Game()
-g.play()
+class cmd_play(cmd.Cmd):
+    prompt = 'MUD> '
+    player = Player()
+    game = Game()
+
+    def do_addmon(self, args):
+        try: 
+            self.game.add_monster(args)
+        except Exception as e:
+            print("Error: ", e)
+
+    def do_up(self, args):
+        try:
+            self.game.moving(self.player, 'up')
+        except Exception as e:
+            print("Error: ", e)
+
+    def do_down(self, args):
+        try:
+            self.game.moving(self.player, 'down')
+        except Exception as e:
+            print("Error: ", e)
+
+    def do_left(self, args):
+        try:
+            self.game.moving(self.player, 'left')
+        except Exception as e:
+            print("Error: ", e)
+
+    def do_right(self, args):
+        try:
+            self.game.moving(self.player, 'right')
+        except Exception as e:
+            print("Error: ", e)
+
+    def default(self, args):
+        print("Invalid command")
+
+if __name__ == '__main__':
+    print("<<< Welcome to Python-MUD 0.1 >>>")
+    cmd_play().cmdloop()
+
