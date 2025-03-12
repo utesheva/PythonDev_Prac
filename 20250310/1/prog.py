@@ -4,6 +4,8 @@ import sys
 from io import StringIO
 import shlex
 import cmd
+import readline
+import string
 
 jgsbat = cowsay.read_dot_cow(StringIO(r"""
     ,_                    _,
@@ -16,6 +18,7 @@ jgsbat = cowsay.read_dot_cow(StringIO(r"""
   jgs     __\\\'--'//__
          (((""`  `"")))
 """))
+
 
 class Player:
     def __init__(self):
@@ -32,6 +35,7 @@ class Player:
             case "right":
                 self.x = (self.x + 1) if self.x < (size - 1) else 0
         print(f"Moved to ({self.x}, {self.y})")
+
 
 class Monster:
     def __init__(self, x, y, name, phrase, hitpoints):
@@ -99,30 +103,31 @@ class Game:
             print("Replaced the old monster")
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
 
-    def attack(self, player, args='with sword'):
+    def attack(self, player, args):
         x, y = player.x, player.y
          
         splitted = shlex.split(args)
         parsed_args = self.parse_args(splitted, {'with': 1})
         if parsed_args:
             match parsed_args['with'][0]:
-                case 'sword':
-                    weapon = 10
-                case 'spear':
-                    weapon = 15
-                case 'axe':
-                    weapon = 20
+                case 'sword': weapon = 10
+                case 'spear': weapon = 15
+                case 'axe': weapon = 20
                 case _:
                     print("Unknown weapon")
                     return
-        else:
+        else: weapon = 10
+
+        if len(args) == 0 or splitted[0] not in self.cows:
             print("Invalid arguments")
             return
-
-        if ((x, y) not in self.monsters or
-            self.monsters[(x, y)] is None):
-            print("No monster here")
+        name = splitted[0]
+        if ((x, y) not in self.monsters or 
+            self.monsters[(x, y)] is None or
+            self.monsters[(x, y)].cow != name) :
+            print(f"No {name} here")
             return
+
         damage = min(self.monsters[(x, y)].hp, weapon)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
         print(f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp")
@@ -137,6 +142,8 @@ class cmd_play(cmd.Cmd):
     prompt = 'MUD> '
     player = Player()
     game = Game()
+    readline.set_completer_delims(readline.get_completer_delims().replace('-', ''))
+
 
     def do_addmon(self, args):
         try: 
@@ -169,13 +176,7 @@ class cmd_play(cmd.Cmd):
             print("Error: ", e)
 
     def do_attack(self, args):
-        try:
-            if args:
-                self.game.attack(self.player, args)
-            else:
-                self.game.attack(self.player)
-        except Exception as e:
-            print("Error: ", e)
+        self.game.attack(self.player, args)
 
     def default(self, args):
         print("Invalid command")
@@ -195,12 +196,19 @@ class cmd_play(cmd.Cmd):
 
     def complete_attack(self, text, line, begidx, endidx):
         words = (line[:endidx] + ".").split()
-        DICT = []
-        if len(words) == 2:
-            DICT = ['with']
-        elif len(words) == 3 and words[-2] == 'with':
-            DICT = ['sword', 'spear', 'axe']
-        return [c for c in DICT if c.startswith(text)]
+        if (len(words) == 2 and
+            (not hasattr(self, 'ind') or
+             hasattr(self, 'ind') and self.matches[self.ind] != text)):
+            self.matches = [c for c in self.game.cows if c.startswith(text)]
+            self.ind = -1
+        elif len(words) == 3:
+            self.matches = ['with']
+            self.ind = -1
+        elif len(words) == 4 and words[-2] == 'with' and (self.matches[self.ind] != text or text == ''):
+            self.matches = ['sword', 'spear', 'axe']
+            self.ind = -1
+        self.ind = (self.ind + 1) % len(self.matches)
+        return [self.matches[self.ind]]
 
 
 if __name__ == '__main__':
