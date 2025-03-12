@@ -4,6 +4,8 @@ import sys
 from io import StringIO
 import shlex
 import cmd
+import readline
+import string
 
 jgsbat = cowsay.read_dot_cow(StringIO(r"""
     ,_                    _,
@@ -16,6 +18,7 @@ jgsbat = cowsay.read_dot_cow(StringIO(r"""
   jgs     __\\\'--'//__
          (((""`  `"")))
 """))
+
 
 class Player:
     def __init__(self):
@@ -32,6 +35,7 @@ class Player:
             case "right":
                 self.x = (self.x + 1) if self.x < (size - 1) else 0
         print(f"Moved to ({self.x}, {self.y})")
+
 
 class Monster:
     def __init__(self, x, y, name, phrase, hitpoints):
@@ -99,11 +103,18 @@ class Game:
             print("Replaced the old monster")
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
 
-    def attack(self, player):
+    def attack(self, player, args):
         x, y = player.x, player.y
+
+        if len(args) == 0 or args not in self.cows:
+            print("Invalid arguments")
+            return
+        name = args
+
         if ((x, y) not in self.monsters or 
-            self.monsters[(x, y)] is None):
-            print("No monster here")
+            self.monsters[(x, y)] is None or
+            self.monsters[(x, y)].cow != name) :
+            print(f"No {name} here")
             return
         damage = min(self.monsters[(x, y)].hp, 10)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
@@ -119,6 +130,8 @@ class cmd_play(cmd.Cmd):
     prompt = 'MUD> '
     player = Player()
     game = Game()
+    readline.set_completer_delims(readline.get_completer_delims().replace('-', ''))
+
 
     def do_addmon(self, args):
         try: 
@@ -151,7 +164,7 @@ class cmd_play(cmd.Cmd):
             print("Error: ", e)
 
     def do_attack(self, args):
-        self.game.attack(self.player)
+        self.game.attack(self.player, args)
 
     def default(self, args):
         print("Invalid command")
