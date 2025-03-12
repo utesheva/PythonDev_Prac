@@ -182,6 +182,21 @@ class cmd_play(cmd.Cmd):
             DICT = []
         return [c for c in DICT if c.startswith(text)]
 
+    def complete_attack(self, text, line, begidx, endidx):
+        words = (line[:endidx] + ".").split()
+        if (len(words) == 2 and
+            (not hasattr(self, 'ind') or
+             hasattr(self, 'ind') and self.matches[self.ind] != text)):
+            self.matches = [c for c in self.game.cows if c.startswith(text)]
+            self.ind = -1
+        elif len(words) != 2:
+            self.matches = []
+            delattr(self, 'ind')
+            return
+        self.ind = (self.ind + 1) % len(self.matches)
+        return [self.matches[self.ind]]
+
+
 if __name__ == '__main__':
     print("<<< Welcome to Python-MUD 0.1 >>>")
     cmd_play().cmdloop()
