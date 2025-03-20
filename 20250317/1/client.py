@@ -38,7 +38,7 @@ def add_monster_check(args):
         raise Error(2)
     return x, y, hp, hello, name
 
-def attack_check(self, x, y, args):
+def attack_check(args):
     splitted = shlex.split(args)
     parsed_args = parse_args(splitted, {'with': 1})
     if parsed_args:
@@ -60,27 +60,27 @@ class Client_MUD(cmd.Cmd):
     host = "localhost" if len(sys.argv) < 2 else sys.argv[1]
     port = 1337 if len(sys.argv) < 3 else int(sys.argv[2])
 
-    def __init__(self, socket):
+    def __init__(self, *args, socket, **kwargs):
         self.s = socket
         self.s.connect((self.host, self.port))
-        return super().__init__()
+        return super().__init__(*args, **kwargs)
 
     def response(self):
-        print(self.s.recv(1024).rstrip().decode())
+        return self.s.recv(1024).rstrip().decode()
     
     def do_addmon(self, args):
         try:
             x, y, hp, hello, name = add_monster_check(args)
-            self.s.sendall(f"addmon {name} {x} {y} {hp} {hello}".encode())
-            self.response()
+            self.s.sendall(f"addmon {name} {x} {y} {hp} {hello}\n".encode())
+            print(self.response())
         except Error as e:
             print(e.text)
 
     def do_attack(self, args):
         try:
             weapon, name = attack_check(args)
-            self.s.sendall(f"attack {weapon} {name}".encode())
-            self.response()
+            self.s.sendall(f"attack {weapon} {name}\n".encode())
+            print(self.response())
         except Error as e:
             print(e.text)
     
@@ -88,29 +88,29 @@ class Client_MUD(cmd.Cmd):
         if len(args) != 0:
             print(Error(1).text)
         else:
-            self.s.sendall(f"move 0 -1".encode())
-            self.response()
+            self.s.sendall(f"move 0 -1\n".encode())
+            print(self.response())
 
     def do_down(self, args):
         if len(args) != 0:
             print(Error(1).text)
         else:
-            self.s.sendall(f"move 0 1".encode())
-            self.response()
+            self.s.sendall(f"move 0 1\n".encode())
+            print(self.response())
 
     def do_left(self, args):
         if len(args) != 0:
             print(Error(1).text)
         else:
-            self.s.sendall(f"move -1 0".encode())
-            self.response()
+            self.s.sendall(f"move -1 0\n".encode())
+            print(self.response())
 
     def do_right(self, args):
         if len(args) != 0:
             print(Error(1).text)
         else:
-            self.s.sendall(f"move 1 0".encode())
-            self.response()
+            self.s.sendall(f"move 1 0\n".encode())
+            print(self.response())
     
     def default(self, args):
         print("Invalid command")
@@ -133,7 +133,7 @@ class Client_MUD(cmd.Cmd):
         if (len(words) == 2 and
             (not hasattr(self, 'ind') or
              hasattr(self, 'ind') and self.matches[self.ind] != text)):
-            self.matches = [c for c in self.game.cows if c.startswith(text)]
+            self.matches = [c for c in cows if c.startswith(text)]
             self.ind = -1
         elif len(words) == 3:
             self.matches = ['with']
@@ -146,5 +146,4 @@ class Client_MUD(cmd.Cmd):
 
 if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     Client_MUD(socket=s).cmdloop()
