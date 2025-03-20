@@ -25,13 +25,14 @@ class Game:
 
     def encounter(self, x, y):
         if self.monsters[(x, y)]:
-            return f' {self.monsters[(x, y)].cow}'
+            return f' {self.monsters[(x, y)].cow} {self.monsters[(x, y)].phrase}'
         return ''
 
     def moving(self, player, d_x, d_y):
         s = player.move(d_x, d_y)
         if (player.x, player.y) in self.monsters:
             s += self.encounter(player.x, player.y)
+        print(s)
         return s
 
     def add_monster(self, x, y, hp, hello, name):
@@ -70,7 +71,8 @@ async def echo(reader, writer):
                 send = asyncio.create_task(reader.readline())
                 match request.result().decode().split():
                     case ['addmon', *args]:
-                        name, x, y, hp, hello = args
+                        name, x, y, hp = args[:4]
+                        hello = ' '.join(args[5:])
                         writer.write(game.add_monster(int(x), int(y), int(hp), hello, name).encode())
                     case ['attack', *args]:
                         x, y = player.x, player.y

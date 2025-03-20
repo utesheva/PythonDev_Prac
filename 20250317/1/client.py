@@ -5,8 +5,21 @@ import cowsay
 import readline
 import sys
 import socket
+from io import StringIO
 
 cows = cowsay.list_cows() + ['jgsbat']
+
+jgsbat = cowsay.read_dot_cow(StringIO(r"""
+    ,_                    _,
+    ) '-._  ,_    _,  _.-' (
+    )  _.-'.|\\\--//|.'-._  (
+     )'   .'\/o\/o\/'.   `(
+      ) .' . \====/ . '. (
+       )  / <<    >> \  (
+        '-._/``  ``\_.-'
+  jgs     __\\\'--'//__
+         (((""`  `"")))
+"""))
 
 def parse_args(args, param):
     args_parsed = {}
@@ -64,15 +77,39 @@ class Client_MUD(cmd.Cmd):
         self.s = socket
         self.s.connect((self.host, self.port))
         return super().__init__(*args, **kwargs)
+    
+    def response_addmon(self, name, x, y, hello):
+        response = self.s.recv(1024).rstrip().decode()
+        print(f"Added monster {name} to ({x}, {y}) saying {hello}")
+        if response == '1': print("Replaced the old monster")
 
-    def response(self):
-        return self.s.recv(1024).rstrip().decode()
+    def response_attack(self, name):
+        response = self.s.recv(1024).rstrip().decode()
+        if response == 'no':
+            print(f"No {name} here")
+            return
+        damage, hp = [int(i) for i in response.split()]
+        print(f"Attacked {name}, damage {damage} hp")
+        if hp == 0:
+            print(f"{name} died")
+        else:
+            print(f"{name} now has {hp}")
+
+    def response_move(self):
+        response = self.s.recv(1024).rstrip().decode().split()
+        print(f"Moved to ({int(response[0])}, {int(response[1])})")
+        if len(response) > 2:
+            hello = ' '.join(response[3:])
+            if response[2] == 'jgsbat':
+                print(cowsay.cowsay(hello, cowfile=jgsbat))
+            else:
+                print(cowsay.cowsay(hello, cow=response[2]))
     
     def do_addmon(self, args):
         try:
             x, y, hp, hello, name = add_monster_check(args)
             self.s.sendall(f"addmon {name} {x} {y} {hp} {hello}\n".encode())
-            print(self.response())
+            self.response_addmon(name, x, y, hello)
         except Error as e:
             print(e.text)
 
@@ -80,7 +117,7 @@ class Client_MUD(cmd.Cmd):
         try:
             weapon, name = attack_check(args)
             self.s.sendall(f"attack {weapon} {name}\n".encode())
-            print(self.response())
+            self.response_attack(name)
         except Error as e:
             print(e.text)
     
@@ -89,28 +126,28 @@ class Client_MUD(cmd.Cmd):
             print(Error(1).text)
         else:
             self.s.sendall(f"move 0 -1\n".encode())
-            print(self.response())
+            self.response_move()
 
     def do_down(self, args):
         if len(args) != 0:
             print(Error(1).text)
         else:
             self.s.sendall(f"move 0 1\n".encode())
-            print(self.response())
+            self.response_move()
 
     def do_left(self, args):
         if len(args) != 0:
             print(Error(1).text)
         else:
             self.s.sendall(f"move -1 0\n".encode())
-            print(self.response())
+            self.response_move()
 
     def do_right(self, args):
         if len(args) != 0:
             print(Error(1).text)
         else:
             self.s.sendall(f"move 1 0\n".encode())
-            print(self.response())
+            self.response_move()
     
     def default(self, args):
         print("Invalid command")
