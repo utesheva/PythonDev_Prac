@@ -20,6 +20,18 @@ jgsbat = cowsay.read_dot_cow(StringIO(r"""
 """))
 
 
+class Error(BaseException):
+    def __init__(self, code, name = ''):
+        match code:
+            case 1:
+                self.text = "Invalid arguments"
+            case 2:
+                self.text = "Cannot add unknown monster"
+            case 3: 
+                self.text = f"No {name} here"
+            case 4:
+                self.text = "Unknown weapon"
+
 class Player:
     def __init__(self):
         self.x, self.y = 0, 0
@@ -78,26 +90,24 @@ class Game:
     
     def add_monster_check(self, args):
         preprocess = shlex.split(args)
+        if len(preprocess) != 8:
+            raise Error(1)
         name = preprocess[0]
         parsed_args = self.parse_args(preprocess[1:], {"hello": 1, "hp": 1, "coords": 2})
-        if not parsed_args or len(preprocess) != 8:
-            print("Invalid arguments")
-            return
+        if not parsed_args:
+            raise Error(1)
         x, y = parsed_args['coords']
         hello = parsed_args['hello'][0]
         hp = parsed_args['hp'][0]
         if (not x.isdigit() or
             not y.isdigit() or
             not hp.isdigit()):
-            print("Invalid arguments")
-            return
+            raise Error(1)
         x, y, hp = map(int, [x, y, hp])
         if x < 0 or x >= self.size or y < 0 or y >= self.size or hp <= 0:
-            print("Invalid arguments")
-            return
+            raise Error(1)
         if name not in self.cows:
-            print("Cannot add unknown monster")
-            return
+            raise Error(2)
         return x, y, hp, hello, name
 
     def add_monster(self, args):
@@ -116,19 +126,16 @@ class Game:
                 case 'spear': weapon = 15
                 case 'axe': weapon = 20
                 case _:
-                    print("Unknown weapon")
-                    return
+                    raise Error(4)
         else: weapon = 10
 
         if len(args) == 0 or splitted[0] not in self.cows:
-            print("Invalid arguments")
-            return
+            raise Error(1)
         name = splitted[0]
         if ((x, y) not in self.monsters or
             self.monsters[(x, y)] is None or
             self.monsters[(x, y)].cow != name) :
-            print(f"No {name} here")
-            return
+            raise Error(3, name)
         return weapon, name
 
     def attack(self, player, args):
@@ -156,38 +163,38 @@ class cmd_play(cmd.Cmd):
     def do_addmon(self, args):
         try: 
             self.game.add_monster(args)
-        except Exception as e:
-            print("Error: ", e)
+        except Error as e:
+            print(e.text)
 
     def do_up(self, args):
         try:
             self.game.moving(self.player, 'up')
-        except Exception as e:
-            print("Error: ", e)
+        except Error as e:
+            print(e.text)
 
     def do_down(self, args):
         try:
             self.game.moving(self.player, 'down')
-        except Exception as e:
-            print("Error: ", e)
+        except Error as e:
+            print(e.text)
 
     def do_left(self, args):
         try:
             self.game.moving(self.player, 'left')
-        except Exception as e:
-            print("Error: ", e)
+        except Error as e:
+            print(e.text)
 
     def do_right(self, args):
         try:
             self.game.moving(self.player, 'right')
-        except Exception as e:
-            print("Error: ", e)
+        except Error as e:
+            print(e.text)
 
     def do_attack(self, args):
         try:
             self.game.attack(self.player, args)
-        except Exception as e:
-            print('Error', e)
+        except Error as e:
+            print(e.text)
 
     def default(self, args):
         print("Invalid command")
