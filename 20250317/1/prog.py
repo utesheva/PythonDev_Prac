@@ -110,8 +110,7 @@ class Game:
             raise Error(2)
         return x, y, hp, hello, name
 
-    def add_monster(self, args):
-        x, y, hp, hello, name = self.add_monster_check(args)
+    def add_monster(self, x, y, hp, hello, name):
         print(f"Added monster {name} to ({x}, {y}) saying {hello}")
         if (x,y) in self.monsters and not(self.monsters[(x,y)] is None):
             print("Replaced the old monster")
@@ -138,11 +137,7 @@ class Game:
             raise Error(3, name)
         return weapon, name
 
-    def attack(self, player, args):
-        x, y = player.x, player.y
-         
-        weapon, name = self.attack_check(x, y, args)
-
+    def attack(self, x, y, weapon, name):
         damage = min(self.monsters[(x, y)].hp, weapon)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
         print(f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp")
@@ -162,7 +157,8 @@ class cmd_play(cmd.Cmd):
 
     def do_addmon(self, args):
         try: 
-            self.game.add_monster(args)
+            x, y, hp, hello, name = self.game.add_monster_check(args)
+            self.game.add_monster(x, y, hp, hello, name)
         except Error as e:
             print(e.text)
 
@@ -192,7 +188,9 @@ class cmd_play(cmd.Cmd):
 
     def do_attack(self, args):
         try:
-            self.game.attack(self.player, args)
+            x, y = self.player.x, self.player.y
+            weapon, name = self.game.attack_check(x, y, args)
+            self.game.attack(x, y, weapon, name)
         except Error as e:
             print(e.text)
 
