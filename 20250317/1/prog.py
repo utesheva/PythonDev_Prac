@@ -75,8 +75,8 @@ class Game:
         player.move(direction, self.size)
         if (player.x, player.y) in self.monsters:
             self.encounter(player.x, player.y)
-
-    def add_monster(self, args):
+    
+    def add_monster_check(self, args):
         preprocess = shlex.split(args)
         name = preprocess[0]
         parsed_args = self.parse_args(preprocess[1:], {"hello": 1, "hp": 1, "coords": 2})
@@ -86,8 +86,8 @@ class Game:
         x, y = parsed_args['coords']
         hello = parsed_args['hello'][0]
         hp = parsed_args['hp'][0]
-        if (not x.isdigit() or 
-            not y.isdigit() or 
+        if (not x.isdigit() or
+            not y.isdigit() or
             not hp.isdigit()):
             print("Invalid arguments")
             return
@@ -98,11 +98,15 @@ class Game:
         if name not in self.cows:
             print("Cannot add unknown monster")
             return
+        return x, y, hp, hello, name
+
+    def add_monster(self, args):
+        x, y, hp, hello, name = self.add_monster_check(args)
         print(f"Added monster {name} to ({x}, {y}) saying {hello}")
         if (x,y) in self.monsters and not(self.monsters[(x,y)] is None):
             print("Replaced the old monster")
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
-
+    
     def attack(self, player, args):
         x, y = player.x, player.y
          
