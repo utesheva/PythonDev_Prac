@@ -1,0 +1,58 @@
+From 9987360ffefeefb027530e96c1ffdcfe75e7034b Mon Sep 17 00:00:00 2001
+From: Kate <fukuro.s@yandex.ru>
+Date: Thu, 20 Mar 2025 17:31:20 +0300
+Subject: [PATCH 2/8] reorganized attack arguments checking
+
+---
+ 20250317/1/prog.py | 17 ++++++++++++-----
+ 1 file changed, 12 insertions(+), 5 deletions(-)
+
+diff --git a/20250317/1/prog.py b/20250317/1/prog.py
+index 2da7f27..cdc705c 100644
+--- a/20250317/1/prog.py
++++ b/20250317/1/prog.py
+@@ -107,9 +107,7 @@ class Game:
+             print("Replaced the old monster")
+         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
+     
+-    def attack(self, player, args):
+-        x, y = player.x, player.y
+-         
++    def attack_check(self, x, y, args):
+         splitted = shlex.split(args)
+         parsed_args = self.parse_args(splitted, {'with': 1})
+         if parsed_args:
+@@ -126,11 +124,17 @@ class Game:
+             print("Invalid arguments")
+             return
+         name = splitted[0]
+-        if ((x, y) not in self.monsters or 
++        if ((x, y) not in self.monsters or
+             self.monsters[(x, y)] is None or
+             self.monsters[(x, y)].cow != name) :
+             print(f"No {name} here")
+             return
++        return weapon, name
++
++    def attack(self, player, args):
++        x, y = player.x, player.y
++         
++        weapon, name = self.attack_check(x, y, args)
+ 
+         damage = min(self.monsters[(x, y)].hp, weapon)
+         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
+@@ -180,7 +184,10 @@ class cmd_play(cmd.Cmd):
+             print("Error: ", e)
+ 
+     def do_attack(self, args):
+-        self.game.attack(self.player, args)
++        try:
++            self.game.attack(self.player, args)
++        except Exception as e:
++            print('Error', e)
+ 
+     def default(self, args):
+         print("Invalid command")
+-- 
+2.43.0
+

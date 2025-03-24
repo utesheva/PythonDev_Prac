@@ -1,0 +1,216 @@
+From b197b3c5a8bc0ec6b95472b2796215c151edb8fa Mon Sep 17 00:00:00 2001
+From: Kate <fukuro.s@yandex.ru>
+Date: Fri, 21 Mar 2025 01:36:52 +0300
+Subject: [PATCH 7/8] beta version of server-client MUD
+
+---
+ 20250317/1/client.py | 35 ++++++++--------
+ 20250317/1/server.py | 95 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 112 insertions(+), 18 deletions(-)
+ create mode 100644 20250317/1/server.py
+
+diff --git a/20250317/1/client.py b/20250317/1/client.py
+index 6111754..31c502c 100644
+--- a/20250317/1/client.py
++++ b/20250317/1/client.py
+@@ -38,7 +38,7 @@ def add_monster_check(args):
+         raise Error(2)
+     return x, y, hp, hello, name
+ 
+-def attack_check(self, x, y, args):
++def attack_check(args):
+     splitted = shlex.split(args)
+     parsed_args = parse_args(splitted, {'with': 1})
+     if parsed_args:
+@@ -60,27 +60,27 @@ class Client_MUD(cmd.Cmd):
+     host = "localhost" if len(sys.argv) < 2 else sys.argv[1]
+     port = 1337 if len(sys.argv) < 3 else int(sys.argv[2])
+ 
+-    def __init__(self, socket):
++    def __init__(self, *args, socket, **kwargs):
+         self.s = socket
+         self.s.connect((self.host, self.port))
+-        return super().__init__()
++        return super().__init__(*args, **kwargs)
+ 
+     def response(self):
+-        print(self.s.recv(1024).rstrip().decode())
++        return self.s.recv(1024).rstrip().decode()
+     
+     def do_addmon(self, args):
+         try:
+             x, y, hp, hello, name = add_monster_check(args)
+-            self.s.sendall(f"addmon {name} {x} {y} {hp} {hello}".encode())
+-            self.response()
++            self.s.sendall(f"addmon {name} {x} {y} {hp} {hello}\n".encode())
++            print(self.response())
+         except Error as e:
+             print(e.text)
+ 
+     def do_attack(self, args):
+         try:
+             weapon, name = attack_check(args)
+-            self.s.sendall(f"attack {weapon} {name}".encode())
+-            self.response()
++            self.s.sendall(f"attack {weapon} {name}\n".encode())
++            print(self.response())
+         except Error as e:
+             print(e.text)
+     
+@@ -88,29 +88,29 @@ class Client_MUD(cmd.Cmd):
+         if len(args) != 0:
+             print(Error(1).text)
+         else:
+-            self.s.sendall(f"move 0 -1".encode())
+-            self.response()
++            self.s.sendall(f"move 0 -1\n".encode())
++            print(self.response())
+ 
+     def do_down(self, args):
+         if len(args) != 0:
+             print(Error(1).text)
+         else:
+-            self.s.sendall(f"move 0 1".encode())
+-            self.response()
++            self.s.sendall(f"move 0 1\n".encode())
++            print(self.response())
+ 
+     def do_left(self, args):
+         if len(args) != 0:
+             print(Error(1).text)
+         else:
+-            self.s.sendall(f"move -1 0".encode())
+-            self.response()
++            self.s.sendall(f"move -1 0\n".encode())
++            print(self.response())
+ 
+     def do_right(self, args):
+         if len(args) != 0:
+             print(Error(1).text)
+         else:
+-            self.s.sendall(f"move 1 0".encode())
+-            self.response()
++            self.s.sendall(f"move 1 0\n".encode())
++            print(self.response())
+     
+     def default(self, args):
+         print("Invalid command")
+@@ -133,7 +133,7 @@ class Client_MUD(cmd.Cmd):
+         if (len(words) == 2 and
+             (not hasattr(self, 'ind') or
+              hasattr(self, 'ind') and self.matches[self.ind] != text)):
+-            self.matches = [c for c in self.game.cows if c.startswith(text)]
++            self.matches = [c for c in cows if c.startswith(text)]
+             self.ind = -1
+         elif len(words) == 3:
+             self.matches = ['with']
+@@ -146,5 +146,4 @@ class Client_MUD(cmd.Cmd):
+ 
+ if __name__ == '__main__':
+     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+     Client_MUD(socket=s).cmdloop()
+diff --git a/20250317/1/server.py b/20250317/1/server.py
+new file mode 100644
+index 0000000..5bb421f
+--- /dev/null
++++ b/20250317/1/server.py
+@@ -0,0 +1,95 @@
++import sys
++import asyncio
++
++class Player:
++    def __init__(self):
++        self.x, self.y = 0, 0
++
++    def move(self, d_x, d_y):
++        self.x = (self.x + d_x) % 10
++        self.y = (self.y + d_y) % 10
++        return f"{self.x} {self.y}"
++
++class Monster:
++    def __init__(self, x, y, name, phrase, hitpoints):
++        self.x = x
++        self.y = y
++        self.phrase = phrase
++        self.cow = name
++        self.hp = hitpoints
++
++class Game:
++    def __init__(self):
++        self.size = 10
++        self.monsters = {}
++
++    def encounter(self, x, y):
++        if self.monsters[(x, y)]:
++            return f' {self.monsters[(x, y)].cow}'
++        return ''
++
++    def moving(self, player, d_x, d_y):
++        s = player.move(d_x, d_y)
++        if (player.x, player.y) in self.monsters:
++            s += self.encounter(player.x, player.y)
++        return s
++
++    def add_monster(self, x, y, hp, hello, name):
++        replaced = "0"
++        if (x,y) in self.monsters and not(self.monsters[(x,y)] is None):
++            replaced = "1"
++        self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
++        return replaced
++
++    def attack(self, x, y, weapon, name):
++        if ((x, y) not in self.monsters or
++            self.monsters[(x, y)] is None or
++            self.monsters[(x, y)].cow != name):
++            return 'no'
++        damage = min(self.monsters[(x, y)].hp, weapon)
++        self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
++        if self.monsters[(x, y)].hp == 0:
++            self.monsters[(x, y)] = None
++            return f'{damage} 0'
++        return f'{damage} {self.monsters[(x, y)].hp}'
++
++async def echo(reader, writer):
++    me = "{}:{}".format(*writer.get_extra_info('peername'))
++    print(me)
++    game = Game()
++    player = Player()
++
++    queue = asyncio.Queue()
++    send = asyncio.create_task(reader.readline())
++    receive = asyncio.create_task(queue.get())
++
++    while not reader.at_eof():
++        done, pending = await asyncio.wait([send, receive], return_when=asyncio.FIRST_COMPLETED)
++        for request in done:
++            if request is send:
++                send = asyncio.create_task(reader.readline())
++                match request.result().decode().split():
++                    case ['addmon', *args]:
++                        name, x, y, hp, hello = args
++                        writer.write(game.add_monster(int(x), int(y), int(hp), hello, name).encode())
++                    case ['attack', *args]:
++                        x, y = player.x, player.y
++                        weapon, name = args
++                        writer.write(game.attack(x, y, int(weapon), name).encode())
++                    case ['move', *args]:
++                        d_x, d_y = [int(i) for i in args]
++                        writer.write(game.moving(player, d_x, d_y).encode())
++            if request is receive:
++                receive = asyncio.create_task(my_queue.get())
++
++    send.cancel()
++    receive.cancel()
++    writer.close()
++    await writer.wait_closed()
++
++async def main():
++    server = await asyncio.start_server(echo, '0.0.0.0', 1337)
++    async with server:
++        await server.serve_forever()
++
++asyncio.run(main())
+-- 
+2.43.0
+
