@@ -6,6 +6,7 @@ import readline
 import sys
 import socket
 from io import StringIO
+import threading
 
 cows = cowsay.list_cows() + ['jgsbat']
 
@@ -70,12 +71,9 @@ def attack_check(args):
 class Client_MUD(cmd.Cmd):
     prompt = 'MUD> '
     readline.set_completer_delims(readline.get_completer_delims().replace('-', ''))
-    host = "localhost" if len(sys.argv) < 2 else sys.argv[1]
-    port = 1337 if len(sys.argv) < 3 else int(sys.argv[2])
 
     def __init__(self, *args, socket, **kwargs):
         self.s = socket
-        self.s.connect((self.host, self.port))
         return super().__init__(*args, **kwargs)
     
     def response_addmon(self, name, x, y, hello):
@@ -181,6 +179,24 @@ class Client_MUD(cmd.Cmd):
         self.ind = (self.ind + 1) % len(self.matches)
         return [self.matches[self.ind]]
 
+    def from_srv(self, cmdline, s):
+        while response := s.recv(1024).rstrip().decode():
+            print(f"\n{response}\n{cmdline.prompt}{readline.get_line_buffer()}", end="", flush=True)
+
 if __name__ == '__main__':
+    host = "localhost" if len(sys.argv) < 3 else sys.argv[2]
+    port = 1337 if len(sys.argv) < 4 else int(sys.argv[3])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    Client_MUD(socket=s).cmdloop()
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.connect((host, port))
+    s.sendall(f"{sys.argv[1]}\n".encode())
+    if s.recv(1024).rstrip().decode() == '1':
+        print("<<< Welcome to Python-MUD 0.1 >>>")
+        print(f"Your login: {sys.argv[1]}")
+        cmdline = Client_MUD(socket=s)
+        mes = threading.Thread(target=cmdline.from_srv, args=(cmdline, s))
+        mes.start()
+        cmdline.cmdloop()
+    else:
+        print("ERROR: Choose another login")
+    s.shutdown(socket.SHUT_RDWR)

@@ -64,7 +64,7 @@ async def echo(reader, writer):
     await asyncio.wait_for(send, timeout=None)
     name = send.result().decode()[:-1]
     if name in players:
-        writer.write('Connection failed. Choose another name.'.encode())
+        writer.write('0'.encode())
         writer.close()
         send.cancel()
         receive.cancel()
@@ -72,7 +72,7 @@ async def echo(reader, writer):
         return
     else:
         players[name] = Player()
-        writer.write(f"<<< Welcome to Python-MUD 0.1 >>>\nYour login: {name}".encode())
+        writer.write(f"1".encode())
 
 
     me = "{}:{}".format(*writer.get_extra_info('peername'))
