@@ -55,14 +55,28 @@ class Game:
         return f'{damage} {self.monsters[(x, y)].hp}'
 
 async def echo(reader, writer):
-    me = "{}:{}".format(*writer.get_extra_info('peername'))
-    print(me)
-    game = Game()
-    player = Player()
+    global game, players
 
     queue = asyncio.Queue()
     send = asyncio.create_task(reader.readline())
     receive = asyncio.create_task(queue.get())
+
+    await asyncio.wait_for(send, timeout=None)
+    name = send.result().decode()[:-1]
+    if name in players:
+        writer.write('Connection failed. Choose another name.'.encode())
+        writer.close()
+        send.cancel()
+        receive.cancel()
+        await writer.wait_closed()
+        return
+    else:
+        players[name] = Player()
+        writer.write(f"<<< Welcome to Python-MUD 0.1 >>>\nYour login: {name}".encode())
+
+
+    me = "{}:{}".format(*writer.get_extra_info('peername'))
+    print(name, me)
 
     while not reader.at_eof():
         done, pending = await asyncio.wait([send, receive], return_when=asyncio.FIRST_COMPLETED)
@@ -90,6 +104,9 @@ async def echo(reader, writer):
     await writer.wait_closed()
 
 async def main():
+    global game, players
+    game = Game()
+    players = {}
     server = await asyncio.start_server(echo, '0.0.0.0', 1337)
     async with server:
         await server.serve_forever()
