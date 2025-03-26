@@ -2,6 +2,7 @@ import sys
 import asyncio
 import cowsay
 from io import StringIO
+import shlex
 
 COWS = cowsay.list_cows() + ['jgsbat']
 
@@ -37,7 +38,7 @@ class Player:
     def move(self, d_x, d_y):
         self.x = (self.x + d_x) % 10
         self.y = (self.y + d_y) % 10
-        return f"{self.x} {self.y}"
+        return f"Moved to ({self.x}, {self.y})"
 
 
 class Monster:
@@ -48,6 +49,11 @@ class Monster:
         self.cow = name
         self.hp = hitpoints
 
+    def say(self):
+        if self.cow == 'jgsbat':
+            return cowsay.cowsay(self.phrase, cowfile=jgsbat)
+        else:
+            return cowsay.cowsay(self.phrase, cow=self.cow)
 
 class Game:
     def __init__(self):
@@ -56,22 +62,21 @@ class Game:
 
     def encounter(self, x, y):
         if self.monsters[(x, y)]:
-            return f' {self.monsters[(x, y)].cow} {self.monsters[(x, y)].phrase}'
+            return self.monsters[(x, y)].say()
         return ''
 
     def moving(self, player, d_x, d_y):
         s = player.move(d_x, d_y)
         if (player.x, player.y) in self.monsters:
             s += self.encounter(player.x, player.y)
-        print(s)
         return s
 
     def add_monster(self, x, y, hp, hello, name):
-        replaced = "0"
+        ans = f"Added monster {name} to ({x}, {y}) saying {hello}\n"
         if (x,y) in self.monsters and not(self.monsters[(x,y)] is None):
-            replaced = "1"
+            ans += "Replaced the old monster\n"
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
-        return replaced
+        return ans
 
     def attack(self, x, y, weapon, name):
         if ((x, y) not in self.monsters or
@@ -80,10 +85,13 @@ class Game:
             return 'no'
         damage = min(self.monsters[(x, y)].hp, weapon)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
+        ans = f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp"
         if self.monsters[(x, y)].hp == 0:
             self.monsters[(x, y)] = None
-            return f'{damage} 0'
-        return f'{damage} {self.monsters[(x, y)].hp}'
+            ans += f"{self.monsters[(x, y)].cow} died"
+        else:
+            ans += f"{self.monsters[(x, y)].cow} now has {self.monsters[(x, y)].hp}"
+        return ans
 
 
 def parse_args(args, param):
@@ -140,8 +148,8 @@ async def echo(reader, writer):
     receive = asyncio.create_task(queue.get())
 
     await asyncio.wait_for(send, timeout=None)
-    name = send.result().decode()[:-1]
-    if name in players:
+    login = send.result().decode()[:-1]
+    if login in players:
         writer.write('0'.encode())
         writer.close()
         send.cancel()
@@ -149,12 +157,12 @@ async def echo(reader, writer):
         await writer.wait_closed()
         return
     else:
-        players[name] = Player()
+        players[login] = Player()
         writer.write(f"1".encode())
 
 
     me = "{}:{}".format(*writer.get_extra_info('peername'))
-    print(name, me)
+    print(login, me)
 
     while not reader.at_eof():
         done, pending = await asyncio.wait([send, receive], return_when=asyncio.FIRST_COMPLETED)
@@ -168,29 +176,26 @@ async def echo(reader, writer):
                         except Error as e:
                             writer.write(e.text.encode())
                             continue
-                        name, x, y, hp = args[:4]
-                        hello = ' '.join(args[5:])
                         writer.write(game.add_monster(int(x), int(y), int(hp), hello, name).encode())
                     case ['attack', args]:
                         try:
                             weapon, name = attack_check(args)
-                            self.s.sendall(f"attack {weapon} {name}\n".encode())
-                            self.response_attack(name)
                         except Error as e:
                             writer.write(e.text.enode())
                             continue
-                        x, y = players[name].x, players[name].y
-                        weapon, name = args
+                        x, y = players[login].x, players[login].y
                         writer.write(game.attack(x, y, int(weapon), name).encode())
                     case ['move', args]:
                         d_x, d_y = [int(i) for i in args.split()]
-                        writer.write(game.moving(players[name], d_x, d_y).encode())
+                        writer.write(game.moving(players[login], d_x, d_y).encode())
             if request is receive:
                 receive = asyncio.create_task(my_queue.get())
 
     send.cancel()
     receive.cancel()
     writer.close()
+    print(login, "LEFT")
+    del players[login]
     await writer.wait_closed()
 
 async def main():
