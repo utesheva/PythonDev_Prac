@@ -4,6 +4,7 @@ import sys
 import socket
 import threading
 import cowsay
+import shlex
 
 cows = cowsay.list_cows() + ['jgsbat']
 
@@ -37,7 +38,7 @@ class Client_MUD(cmd.Cmd):
         print("Invalid command")
 
     def complete_addmon(self, text, line, begidx, endidx):
-        words = (line[:endidx] + ".").split()
+        words = shlex.split(line[:endidx] + ".")
         DICT = list({'hello', 'hp', 'coords'} - set(line[:endidx].split()))
         if 'coords' in words and words[-2] != 'coords':
             condition = (len(words) % 2 == 0)
