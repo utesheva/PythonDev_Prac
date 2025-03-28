@@ -34,11 +34,12 @@ class Error(BaseException):
 class Player:
     def __init__(self):
         self.x, self.y = 0, 0
+        self.queue = asyncio.Queue()
 
     def move(self, d_x, d_y):
         self.x = (self.x + d_x) % 10
         self.y = (self.y + d_y) % 10
-        return f"Moved to ({self.x}, {self.y})"
+        return f"Moved to ({self.x}, {self.y})\n"
 
 
 class Monster:
@@ -82,15 +83,15 @@ class Game:
         if ((x, y) not in self.monsters or
             self.monsters[(x, y)] is None or
             self.monsters[(x, y)].cow != name):
-            return 'no'
+            raise Error(3, name)
         damage = min(self.monsters[(x, y)].hp, weapon)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
-        ans = f"Attacked {self.monsters[(x, y)].cow}, damage {damage} hp"
+        ans = f"attacked {self.monsters[(x, y)].cow}, damage {damage} hp\n"
         if self.monsters[(x, y)].hp == 0:
+            ans += f"{self.monsters[(x, y)].cow} died\n"
             self.monsters[(x, y)] = None
-            ans += f"{self.monsters[(x, y)].cow} died"
         else:
-            ans += f"{self.monsters[(x, y)].cow} now has {self.monsters[(x, y)].hp}"
+            ans += f"{self.monsters[(x, y)].cow} now has {self.monsters[(x, y)].hp}\n"
         return ans
 
 
@@ -140,12 +141,15 @@ def attack_check(args):
     name = splitted[0]
     return weapon, name
 
+async def send_all(mes, exception=None):
+    for out in players.values():
+        if out != exception:
+            await out.queue.put(f"{mes}")
+
 async def echo(reader, writer):
     global game, players
 
-    queue = asyncio.Queue()
     send = asyncio.create_task(reader.readline())
-    receive = asyncio.create_task(queue.get())
 
     await asyncio.wait_for(send, timeout=None)
     login = send.result().decode()[:-1]
@@ -153,12 +157,13 @@ async def echo(reader, writer):
         writer.write('0'.encode())
         writer.close()
         send.cancel()
-        receive.cancel()
         await writer.wait_closed()
         return
     else:
         players[login] = Player()
+        receive = asyncio.create_task(players[login].queue.get())
         writer.write(f"1".encode())
+        await send_all(f'New player: {login}', exception=players[login])
 
 
     me = "{}:{}".format(*writer.get_extra_info('peername'))
@@ -176,26 +181,30 @@ async def echo(reader, writer):
                         except Error as e:
                             writer.write(e.text.encode())
                             continue
-                        writer.write(game.add_monster(int(x), int(y), int(hp), hello, name).encode())
+                        await send_all(game.add_monster(int(x), int(y), int(hp), hello, name))
                     case ['attack', args]:
                         try:
+                            x, y = players[login].x, players[login].y 
                             weapon, name = attack_check(args)
+                            await send_all(f'{login} {game.attack(x, y, int(weapon), name)}')
                         except Error as e:
-                            writer.write(e.text.enode())
+                            writer.write(e.text.encode())
                             continue
-                        x, y = players[login].x, players[login].y
-                        writer.write(game.attack(x, y, int(weapon), name).encode())
+                        
                     case ['move', args]:
                         d_x, d_y = [int(i) for i in args.split()]
                         writer.write(game.moving(players[login], d_x, d_y).encode())
             if request is receive:
-                receive = asyncio.create_task(my_queue.get())
+                receive = asyncio.create_task(players[login].queue.get())
+                writer.write(f"{request.result()}\n".encode())
+                await writer.drain()
 
     send.cancel()
     receive.cancel()
     writer.close()
     print(login, "LEFT")
     del players[login]
+    send_all(f"{login} left")
     await writer.wait_closed()
 
 async def main():
