@@ -1,4 +1,3 @@
-import sys
 import asyncio
 import cowsay
 from io import StringIO
@@ -18,8 +17,16 @@ JGSBAT = cowsay.read_dot_cow(StringIO(r"""
          (((""`  `"")))
 """))
 
+
 class Error(BaseException):
-    def __init__(self, code, name = ''):
+    """Class of errors that are detected by server"""
+    def __init__(self, code, name=''):
+        """
+        Define error
+
+        code:int identifier of the Error
+        name:str name of the cow that is used in one error message
+        """
         match code:
             case 1:
                 self.text = "Invalid arguments"
@@ -32,18 +39,36 @@ class Error(BaseException):
 
 
 class Player:
+    """Class with basic users characteristics and actions"""
     def __init__(self):
+        """Player is set on (0, 0) position"""
         self.x, self.y = 0, 0
         self.queue = asyncio.Queue()
 
     def move(self, d_x, d_y):
+        """
+        Funtion to mive player
+
+        d_x: -1 or 0 or 1
+        d_y: -1 or 0 or 1
+        """
         self.x = (self.x + d_x) % 10
         self.y = (self.y + d_y) % 10
         return f"Moved to ({self.x}, {self.y})\n"
 
 
 class Monster:
+    """Class with basic monsters characteristics and actions"""
     def __init__(self, x, y, name, phrase, hitpoints):
+        """
+        Set monster
+
+        x:int first coordinate
+        y:int seconf coordinate
+        name:str name of the monster
+        phrase:str string to be print when user encounts monster
+        hitpoints:int number of hitpoints
+        """
         self.x = x
         self.y = y
         self.phrase = phrase
@@ -51,38 +76,71 @@ class Monster:
         self.hp = hitpoints
 
     def say(self):
+        """Return cow with phrase"""
+        global jgsbat
         if self.cow == 'jgsbat':
             return cowsay.cowsay(self.phrase, cowfile=jgsbat)
         else:
             return cowsay.cowsay(self.phrase, cow=self.cow)
 
+
 class Game:
+    """Class to process game"""
     def __init__(self):
+        """Initialize characteristics"""
         self.size = 10
         self.monsters = {}
 
     def encounter(self, x, y):
+        """
+        Return monster when user meets it
+
+        x:int first coordinate of the player
+        y:int second coordinate of the player
+        """
         if self.monsters[(x, y)]:
             return self.monsters[(x, y)].say()
         return ''
 
     def moving(self, player, d_x, d_y):
+        """
+        Move
+
+        player:Player current player
+        d_x: -1 or 0 or 1
+        d_x: -1 or 0 or 1
+        """
         s = player.move(d_x, d_y)
         if (player.x, player.y) in self.monsters:
             s += self.encounter(player.x, player.y)
         return s
 
     def add_monster(self, x, y, hp, hello, name):
+        """
+        Add monster
+
+        x:int first coordinate
+        y:int second coordinate
+        hp:int number of hitpoints
+        hello:str phrase to be said by monster
+        name:str name of the monster
+        """
         ans = f"Added monster {name} to ({x}, {y}) saying {hello}\n"
-        if (x,y) in self.monsters and not(self.monsters[(x,y)] is None):
+        if (x, y) in self.monsters and not (self.monsters[(x, y)] is None):
             ans += "Replaced the old monster\n"
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
         return ans
 
     def attack(self, x, y, weapon, name):
-        if ((x, y) not in self.monsters or
-            self.monsters[(x, y)] is None or
-            self.monsters[(x, y)].cow != name):
+        """
+        Attack
+
+        x:int first coordinate
+        y:int second coordinate
+        weapon: sword, spear or axe
+        name: name of the monster to be attacked
+        """
+        if ((x, y) not in self.monsters or self.monsters[(x, y)] is None or self.monsters[(x, y)].cow != name):
             raise Error(3, name)
         damage = min(self.monsters[(x, y)].hp, weapon)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
@@ -96,6 +154,11 @@ class Game:
 
 
 def parse_args(args, param):
+    """
+    Parse args
+
+    params:dict parameters to be parsed
+    """
     args_parsed = {}
     for i in param:
         if i not in args:
@@ -103,7 +166,13 @@ def parse_args(args, param):
         args_parsed[i] = args[args.index(i) + 1: args.index(i) + 1 + param[i]]
     return args_parsed
 
+
 def add_monster_check(args):
+    """
+    Check addmon
+
+    args:str args to be checked
+    """
     preprocess = shlex.split(args)
     if len(preprocess) != 8:
         raise Error(1)
@@ -114,9 +183,7 @@ def add_monster_check(args):
     x, y = parsed_args['coords']
     hello = parsed_args['hello'][0]
     hp = parsed_args['hp'][0]
-    if (not x.isdigit() or
-        not y.isdigit() or
-        not hp.isdigit()):
+    if (not x.isdigit() or not y.isdigit() or not hp.isdigit()):
         raise Error(1)
     x, y, hp = map(int, [x, y, hp])
     if x < 0 or x >= 10 or y < 0 or y >= 10 or hp <= 0:
@@ -125,7 +192,13 @@ def add_monster_check(args):
         raise Error(2)
     return x, y, hp, hello, name
 
+
 def attack_check(args):
+    """
+    Check attack
+
+    args:str args to be checked
+    """
     splitted = shlex.split(args)
     parsed_args = parse_args(splitted, {'with': 1})
     if parsed_args:
@@ -135,18 +208,28 @@ def attack_check(args):
             case 'axe': weapon = 20
             case _:
                 raise Error(4)
-    else: weapon = 10
+    else:
+        weapon = 10
     if len(args) == 0 or splitted[0] not in COWS:
         raise Error(1)
     name = splitted[0]
     return weapon, name
 
+
 async def send_all(mes, exception=None):
+    """
+    Send message to all users
+
+    mes:str message to be sent
+    exception:Player player that dont receive this message
+    """
     for out in players.values():
         if out != exception:
             await out.queue.put(f"{mes}")
 
+
 async def echo(reader, writer):
+    """Run game"""
     global game, players
 
     send = asyncio.create_task(reader.readline())
@@ -162,9 +245,8 @@ async def echo(reader, writer):
     else:
         players[login] = Player()
         receive = asyncio.create_task(players[login].queue.get())
-        writer.write(f"1".encode())
+        writer.write("1".encode())
         await send_all(f'New player: {login}', exception=players[login])
-
 
     me = "{}:{}".format(*writer.get_extra_info('peername'))
     print(login, me)
@@ -184,12 +266,12 @@ async def echo(reader, writer):
                         await send_all(game.add_monster(int(x), int(y), int(hp), hello, name))
                     case ['attack', args]:
                         try:
-                            x, y = players[login].x, players[login].y 
+                            x, y = players[login].x, players[login].y
                             weapon, name = attack_check(args)
                             await send_all(f'{login} {game.attack(x, y, int(weapon), name)}')
                         except Error as e:
                             writer.write(e.text.encode())
-                            continue         
+                            continue
                     case ['move', args]:
                         d_x, d_y = [int(i) for i in args.split()]
                         writer.write(game.moving(players[login], d_x, d_y).encode())
@@ -209,7 +291,9 @@ async def echo(reader, writer):
     await send_all(f"{login} left")
     await writer.wait_closed()
 
+
 async def main():
+    """Run server"""
     global game, players
     game = Game()
     players = {}
