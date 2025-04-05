@@ -194,7 +194,6 @@ async def echo(reader, writer):
                         d_x, d_y = [int(i) for i in args.split()]
                         writer.write(game.moving(players[login], d_x, d_y).encode())
                     case ['sendall', args]:
-                        print(args)
                         args = shlex.split(args)[0]
                         await send_all(f"{login}: {args}", exception=players[login])
             if request is receive:
@@ -207,7 +206,7 @@ async def echo(reader, writer):
     writer.close()
     print(login, "LEFT")
     del players[login]
-    send_all(f"{login} left")
+    await send_all(f"{login} left")
     await writer.wait_closed()
 
 async def main():
