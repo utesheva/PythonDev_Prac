@@ -34,6 +34,9 @@ class Client_MUD(cmd.Cmd):
     def do_right(self, args):
         self.s.sendall(f"move 1 0\n".encode())
 
+    def do_sendall(self, args):
+        self.s.sendall(f"sendall {args}\n".encode())
+
     def default(self, args):
         print("Invalid command")
 

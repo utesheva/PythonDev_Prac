@@ -189,11 +189,14 @@ async def echo(reader, writer):
                             await send_all(f'{login} {game.attack(x, y, int(weapon), name)}')
                         except Error as e:
                             writer.write(e.text.encode())
-                            continue
-                        
+                            continue         
                     case ['move', args]:
                         d_x, d_y = [int(i) for i in args.split()]
                         writer.write(game.moving(players[login], d_x, d_y).encode())
+                    case ['sendall', args]:
+                        print(args)
+                        args = shlex.split(args)[0]
+                        await send_all(f"{login}: {args}", exception=players[login])
             if request is receive:
                 receive = asyncio.create_task(players[login].queue.get())
                 writer.write(f"{request.result()}\n".encode())
