@@ -311,6 +311,9 @@ async def random_monster():
                     moved = True
             print(f"{monster.cow} moved one cell {direction[-1]} on {monster.x}, {monster.y}")
             await send_all(f"{monster.cow} moved one cell {direction[-1]}")
+            for i in players.values():
+                if i.x == x and i.y == y:
+                    await i.queue.put(f"{game.encounter(x, y)}")
         else:
             print('No monsters are on the board')
 
