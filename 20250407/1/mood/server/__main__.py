@@ -296,7 +296,7 @@ async def echo(reader, writer):
 async def random_monster():
     global game, players
     while True:
-        await asyncio.sleep(5)
+        await asyncio.sleep(30)
         if game.monsters:
             moved = False
             while not moved:
@@ -309,7 +309,8 @@ async def random_monster():
                     monster.x, monster.y = x, y
                     game.monsters[(monster.x, monster.y)] = monster
                     moved = True
-            print(f"{monster.cow} moved one cell {direction[-1]}")
+            print(f"{monster.cow} moved one cell {direction[-1]} on {monster.x}, {monster.y}")
+            await send_all(f"{monster.cow} moved one cell {direction[-1]}")
         else:
             print('No monsters are on the board')
 
