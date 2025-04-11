@@ -296,14 +296,19 @@ async def echo(reader, writer):
 async def random_monster():
     global game, players
     while True:
-        await asyncio.sleep(30)
+        await asyncio.sleep(5)
         if game.monsters:
-            monster = game.monsters[random.choice(list(game.monsters.keys()))]
-            del game.monsters[(monster.x, monster.y)]
-            direction = random.choice([(0, 1, 'down'), (1, 0, 'right'), (0, -1, 'up'), (-1, 0, 'left')])
-            monster.x = (monster.x + direction[0]) % 10
-            monster.y = (monster.y + direction[1]) % 10
-            game.monsters[(monster.x, monster.y)] = monster
+            moved = False
+            while not moved:
+                monster = game.monsters[random.choice(list(game.monsters.keys()))]
+                direction = random.choice([(0, 1, 'down'), (1, 0, 'right'), (0, -1, 'up'), (-1, 0, 'left')])
+                x = (monster.x + direction[0]) % 10
+                y = (monster.y + direction[1]) % 10
+                if (x, y) not in game.monsters:
+                    del game.monsters[(monster.x, monster.y)]
+                    monster.x, monster.y = x, y
+                    game.monsters[(monster.x, monster.y)] = monster
+                    moved = True
             print(f"{monster.cow} moved one cell {direction[-1]}")
         else:
             print('No monsters are on the board')
