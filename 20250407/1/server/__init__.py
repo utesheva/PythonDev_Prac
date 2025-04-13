@@ -1,3 +1,4 @@
+"""Run server"""
 import asyncio
 import cowsay
 from io import StringIO
@@ -332,5 +333,3 @@ async def main():
     '''
     async with server:
         await server.serve_forever()
-
-asyncio.run(main())

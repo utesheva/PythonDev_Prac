@@ -1,2 +1,5 @@
 _build/
-
+*.swp
+build/
+*.doctree
+*.pickle
