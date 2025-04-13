@@ -2,7 +2,6 @@ import asyncio
 import cowsay
 from io import StringIO
 import shlex
-import threading
 import random
 
 COWS = cowsay.list_cows() + ['jgsbat']
@@ -293,7 +292,9 @@ async def echo(reader, writer):
     await send_all(f"{login} left")
     await writer.wait_closed()
 
+
 async def random_monster():
+    """Generate wandering monster"""
     global game, players
     while True:
         await asyncio.sleep(30)
@@ -316,7 +317,6 @@ async def random_monster():
                     await i.queue.put(f"{game.encounter(x, y)}")
         else:
             print('No monsters are on the board')
-
 
 
 async def main():
