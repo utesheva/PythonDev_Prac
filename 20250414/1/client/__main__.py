@@ -25,7 +25,8 @@ class Client_MUD(cmd.Cmd):
         return super().__init__(*args, **kwargs)
 
     def precmd(self, line):
-        time.sleep(1)
+        if not self.stdin is sys.stdin:
+            time.sleep(1)
         return super().precmd(line)
 
     def do_addmon(self, args):
@@ -80,8 +81,17 @@ class Client_MUD(cmd.Cmd):
 
     def do_EOF(self, args):
         return 1
+    
     def emptyline(self):
         return 
+
+    def do_movemonsters(self, args):
+        """
+        Turning on/off wandering monsters.
+
+        args:str on or off
+        """
+        self.s.sendall(f"movemonsters {args}\n".encode())
 
     def default(self, args):
         """Process any other commands"""
@@ -118,6 +128,15 @@ class Client_MUD(cmd.Cmd):
         self.ind = (self.ind + 1) % len(self.matches)
         return [self.matches[self.ind]]
 
+    def complete_movemonsters(self, text, line, begidx, endidx):
+        """Complete movemonsters attack"""
+        words = (line[:endidx] + ".").split()
+        if len(words) == 2:
+            DICT = ['on', 'off']
+        else:
+            DICT = []
+        return [c for c in DICT if c.startswith(text)]
+    
     def from_srv(self, cmdline, s):
         """
         Print all messages from the server
@@ -130,7 +149,7 @@ class Client_MUD(cmd.Cmd):
 
 
 if __name__ == '__main__':
-    if sys.argv[2] == '--file' and len(sys.argv) > 3:
+    if len(sys.argv) > 3 and sys.argv[2] == '--file':
         file = open(sys.argv[3])
     else:
         file = None
