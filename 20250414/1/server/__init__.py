@@ -92,6 +92,7 @@ class Game:
         """Initialize characteristics"""
         self.size = 10
         self.monsters = {}
+        self.mode = True
 
     def encounter(self, x, y):
         """
@@ -153,6 +154,20 @@ class Game:
         else:
             ans += f"{self.monsters[(x, y)].cow} now has {self.monsters[(x, y)].hp}\n"
         return ans
+
+    def set_mode(self, args):
+        """
+        Turn on/off wanfering monsters
+
+        args:str on or off
+        """
+        if args not in ['on\n', 'off\n']:
+            raise Error(1)
+        if args == 'on\n':
+            self.mode = True
+        else:
+            self.mode = False
+        return f'Moving monsters: {args}'
 
 
 def parse_args(args, param):
@@ -273,13 +288,19 @@ async def echo(reader, writer):
                             await send_all(f'{login} {game.attack(x, y, int(weapon), name)}')
                         except Error as e:
                             writer.write(e.text.encode())
-                            continue
                     case ['move', args]:
                         d_x, d_y = [int(i) for i in args.split()]
                         writer.write(game.moving(players[login], d_x, d_y).encode())
                     case ['sendall', args]:
                         args = shlex.split(args)[0]
                         await send_all(f"{login}: {args}", exception=players[login])
+                    case ['movemonsters', args]:
+                        try:
+                            writer.write(game.set_mode(args).encode())
+                        except Error as e:
+                            writer.write(e.text.encode())
+                    case anything if anything[0] not in players:
+                        writer.write(f"Unknown by server {anything}".encode())
             if request is receive:
                 receive = asyncio.create_task(players[login].queue.get())
                 writer.write(f"{request.result()}\n".encode())
@@ -298,6 +319,9 @@ async def random_monster():
     """Generate wandering monster"""
     global game, players
     while True:
+        if not game.mode:
+            await asyncio.sleep(5)
+            continue
         await asyncio.sleep(30)
         if game.monsters:
             moved = False
