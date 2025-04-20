@@ -1,0 +1,123 @@
+# Russian translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-04-20 03:44+0300\n"
+"PO-Revision-Date: 2025-04-20 01:02+0300\n"
+"Last-Translator: Ekaterina Utesheva <utesheva.e.e@gmail.com>\n"
+"Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: server/__init__.py:44
+msgid "Invalid arguments"
+msgstr "Неверные аргументы"
+
+#: server/__init__.py:46
+msgid "Cannot add unknown monster"
+msgstr "Не возможно добавить неизвестного монстра"
+
+#: server/__init__.py:48
+#, python-brace-format
+msgid "No {name} here"
+msgstr "В этом месте нет {name}"
+
+#: server/__init__.py:50
+msgid "Unknown weapon"
+msgstr "Неизвестное оружие"
+
+#: server/__init__.py:70
+#, python-brace-format
+msgid "Moved to ({x}, {y})\n"
+msgstr "Передвинулся на ({x}, {y})\n"
+
+#: server/__init__.py:188
+#, python-brace-format
+msgid "Moving monsters: {args}"
+msgstr "Перемещение монстров: {args}"
+
+#: server/__init__.py:256
+msgid "Replaced the old monster\n"
+msgstr "Заменён старый монстр\n"
+
+#: server/__init__.py:257
+#, python-brace-format
+msgid ""
+"Added monster {name} to ({x}, {y}) saying {hello}\n"
+"{replaced}"
+msgstr ""
+"Добавлен монстр {name} на ({x}, {y}), говорящий {hello}\n"
+"{replaced}"
+
+#: server/__init__.py:263
+#, python-brace-format
+msgid "{name} died\n"
+msgstr "{name} умер\n"
+
+#: server/__init__.py:265
+#, python-brace-format
+msgid "{name} now has"
+msgstr "У {name} теперь"
+
+#: server/__init__.py:266
+#, python-brace-format
+msgid " {hp} hit point\n"
+msgid_plural " {hp} hit points\n"
+msgstr[0] " {hp} очко здоровья"
+msgstr[1] " {hp} очка здоровья"
+msgstr[2] " {hp} очков здоровья"
+
+#: server/__init__.py:267
+#, python-brace-format
+msgid "{login} attacked {name}"
+msgstr "{login} атаковал {name}"
+
+#: server/__init__.py:268
+#, python-brace-format
+msgid ", damage {damage} hit point\n"
+msgid_plural ", damage {damage} hit points\n"
+msgstr[0] ", урон {damage} очко здоровья\n"
+msgstr[1] ", урон {damage} очка здоровья\n"
+msgstr[2] ", урон {damage} очков здоровья\n"
+
+#: server/__init__.py:271
+#, python-brace-format
+msgid "New player: {login}"
+msgstr "Новый игрок: {login}"
+
+#: server/__init__.py:273
+#, python-brace-format
+msgid "{login} left"
+msgstr ""
+
+#: server/__init__.py:372
+msgid "down"
+msgstr "вниз"
+
+#: server/__init__.py:372
+msgid "right"
+msgstr "вправо"
+
+#: server/__init__.py:372
+msgid "up"
+msgstr "вверх"
+
+#: server/__init__.py:372
+msgid "left"
+msgstr "влево"
+
+#: server/__init__.py:381
+#, python-brace-format
+msgid "{monster} moved one cell {direction}"
+msgstr "{monster} передвинулся на одну клетку {direction}"
+

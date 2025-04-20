@@ -4,6 +4,8 @@ import cowsay
 from io import StringIO
 import shlex
 import random
+import gettext
+import locale
 
 COWS = cowsay.list_cows() + ['jgsbat']
 
@@ -19,6 +21,14 @@ JGSBAT = cowsay.read_dot_cow(StringIO(r"""
          (((""`  `"")))
 """))
 
+LOCALES = {
+    ("ru_RU", "UTF-8"): gettext.translation("mud", "po", ["ru"]),
+    ("en_US", "UTF-8"): gettext.NullTranslations()
+}
+
+def _(text):
+    return LOCALES[locale.getlocale()].gettext(text)
+
 
 class Error(BaseException):
     """Class of errors that are detected by server"""
@@ -31,13 +41,13 @@ class Error(BaseException):
         """
         match code:
             case 1:
-                self.text = "Invalid arguments"
+                self.text = _("Invalid arguments")
             case 2:
-                self.text = "Cannot add unknown monster"
+                self.text = _("Cannot add unknown monster")
             case 3:
-                self.text = f"No {name} here"
+                self.text = _("No {name} here").format(name=name)
             case 4:
-                self.text = "Unknown weapon"
+                self.text = _("Unknown weapon")
 
 
 class Player:
@@ -46,17 +56,18 @@ class Player:
         """Player is set on (0, 0) position"""
         self.x, self.y = 0, 0
         self.queue = asyncio.Queue()
+        self.lang = ("en_US", "UTF-8")
 
     def move(self, d_x, d_y):
         """
-        Funtion to mive player
+        Funtion to move player
 
         d_x: -1 or 0 or 1
         d_y: -1 or 0 or 1
         """
         self.x = (self.x + d_x) % 10
         self.y = (self.y + d_y) % 10
-        return f"Moved to ({self.x}, {self.y})\n"
+        return _("Moved to ({x}, {y})\n").format(x=self.x, y=self.y)
 
 
 class Monster:
@@ -128,10 +139,15 @@ class Game:
         hello:str phrase to be said by monster
         name:str name of the monster
         """
-        ans = f"Added monster {name} to ({x}, {y}) saying {hello}\n"
+        ans = {'name': name, 
+               'x': x, 'y': y,
+               'hello': hello}
         if (x, y) in self.monsters and not (self.monsters[(x, y)] is None):
-            ans += "Replaced the old monster\n"
+            ans['state'] = 1
+        else:
+            ans['state'] = 0
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
+        print(ans)
         return ans
 
     def attack(self, x, y, weapon, name):
@@ -147,12 +163,14 @@ class Game:
             raise Error(3, name)
         damage = min(self.monsters[(x, y)].hp, weapon)
         self.monsters[(x, y)].hp = self.monsters[(x, y)].hp - damage
-        ans = f"attacked {self.monsters[(x, y)].cow}, damage {damage} hp\n"
+        ans = {'name': self.monsters[(x, y)].cow,
+               'damage': damage}
         if self.monsters[(x, y)].hp == 0:
-            ans += f"{self.monsters[(x, y)].cow} died\n"
+            ans['state'] = 0
             self.monsters[(x, y)] = None
         else:
-            ans += f"{self.monsters[(x, y)].cow} now has {self.monsters[(x, y)].hp}\n"
+            ans['state'] = 1
+            ans['hp'] = self.monsters[(x, y)].hp
         return ans
 
     def set_mode(self, args):
@@ -167,7 +185,7 @@ class Game:
             self.mode = True
         else:
             self.mode = False
-        return f'Moving monsters: {args}'
+        return _('Moving monsters: {args}').format(args=args)
 
 
 def parse_args(args, param):
@@ -232,8 +250,29 @@ def attack_check(args):
     name = splitted[0]
     return weapon, name
 
+def answer(fun=None, name='', x=0, y=0, hello='', login='', damage=0, state=0, hp=0):
+    match fun:
+        case 'addmon':
+            replaced = '' if state == 0 else _("Replaced the old monster\n") 
+            return _("Added monster {name} to ({x}, {y}) saying {hello}\n{replaced}").format(name=name,
+                                                                                             x=x, y=y,
+                                                                                             hello=hello,
+                                                                                             replaced=replaced)
+        case 'attack':
+            if state == 0:
+                health =_("{name} died\n").format(name=name)
+            else:
+                health = _("{name} now has").format(name=name) 
+                         + LOCALES[locale.getlocale()].ngettext(" {hp} point\n", " {hp} points\n", hp).format(hp)
+            return _("{login} attacked {name}").format(login=login, name=name)
+                   + LOCALES[locale.getlocale()].ngettext(", damage {damage} point\n", ", damage {damage} points\n", damage).format(damage)
+                   + health
+        case 'new':
+            return _('New player: {login}').format(login=login)
+        case 'left':
+            return _("{login} left").format(login=login)
 
-async def send_all(mes, exception=None):
+async def send_all(mes='', fun=None, args={}, exception=None):
     """
     Send message to all users
 
@@ -241,9 +280,12 @@ async def send_all(mes, exception=None):
     exception:Player player that dont receive this message
     """
     for out in players.values():
+        locale.setlocale(locale.LC_ALL, out.lang)
         if out != exception:
+            if fun:
+                mes = answer(fun=fun, **args)
             await out.queue.put(f"{mes}")
-
+    locale.setlocale(locale.LC_ALL, players[login].lang)
 
 async def echo(reader, writer):
     """Run game"""
@@ -263,7 +305,7 @@ async def echo(reader, writer):
         players[login] = Player()
         receive = asyncio.create_task(players[login].queue.get())
         writer.write("1".encode())
-        await send_all(f'New player: {login}', exception=players[login])
+        await send_all(fun='new', args={'login':login}, exception=players[login])
 
     me = "{}:{}".format(*writer.get_extra_info('peername'))
     print(login, me)
@@ -280,12 +322,14 @@ async def echo(reader, writer):
                         except Error as e:
                             writer.write(e.text.encode())
                             continue
-                        await send_all(game.add_monster(int(x), int(y), int(hp), hello, name))
+                        await send_all(fun='addmon', args=game.add_monster(int(x), int(y), int(hp), hello, name))
                     case ['attack', args]:
                         try:
                             x, y = players[login].x, players[login].y
                             weapon, name = attack_check(args)
-                            await send_all(f'{login} {game.attack(x, y, int(weapon), name)}')
+                            result = game.attack(x, y, int(weapon), name)
+                            result['login'] = login
+                            await send_all(fun = 'attack', args=result)
                         except Error as e:
                             writer.write(e.text.encode())
                     case ['move', args]:
@@ -293,14 +337,12 @@ async def echo(reader, writer):
                         writer.write(game.moving(players[login], d_x, d_y).encode())
                     case ['sendall', args]:
                         args = shlex.split(args)[0]
-                        await send_all(f"{login}: {args}", exception=players[login])
+                        await send_all(mes="{login}: {args}", exception=players[login])
                     case ['movemonsters', args]:
                         try:
                             writer.write(game.set_mode(args).encode())
                         except Error as e:
                             writer.write(e.text.encode())
-                    case anything if anything[0] not in players:
-                        writer.write(f"Unknown by server {anything}".encode())
             if request is receive:
                 receive = asyncio.create_task(players[login].queue.get())
                 writer.write(f"{request.result()}\n".encode())
@@ -311,7 +353,7 @@ async def echo(reader, writer):
     writer.close()
     print(login, "LEFT")
     del players[login]
-    await send_all(f"{login} left")
+    await send_all(fun='left', args={'login':login})
     await writer.wait_closed()
 
 
@@ -327,7 +369,7 @@ async def random_monster():
             moved = False
             while not moved:
                 monster = game.monsters[random.choice(list(game.monsters.keys()))]
-                direction = random.choice([(0, 1, 'down'), (1, 0, 'right'), (0, -1, 'up'), (-1, 0, 'left')])
+                direction = random.choice([(0, 1, _('down')), (1, 0, _('right')), (0, -1, _('up')), (-1, 0, _('left'))])
                 x = (monster.x + direction[0]) % 10
                 y = (monster.y + direction[1]) % 10
                 if (x, y) not in game.monsters:
@@ -336,7 +378,8 @@ async def random_monster():
                     game.monsters[(monster.x, monster.y)] = monster
                     moved = True
             print(f"{monster.cow} moved one cell {direction[-1]} on {monster.x}, {monster.y}")
-            await send_all(f"{monster.cow} moved one cell {direction[-1]}")
+            await send_all(_("{monster} moved one cell {direction}").format(monster = monster.cow,
+                                                                            direction = direction[-1]))
             for i in players.values():
                 if i.x == x and i.y == y:
                     await i.queue.put(f"{game.encounter(x, y)}")
@@ -351,9 +394,5 @@ async def main():
     players = {}
     server = await asyncio.start_server(echo, '0.0.0.0', 1337)
     asyncio.create_task(random_monster())
-    '''
-    timer = threading.Thread(target=random_monster, args=tuple())
-    timer.start()
-    '''
     async with server:
         await server.serve_forever()
