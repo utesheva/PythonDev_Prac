@@ -92,6 +92,14 @@ class Client_MUD(cmd.Cmd):
         args:str on or off
         """
         self.s.sendall(f"movemonsters {args}\n".encode())
+    
+    def do_locale(self, args):
+        """
+        Change locale
+
+        args: ru_RU.UTF8 or en_US.UTF8
+        """
+        self.s.sendall(f"locale {args}\n".encode())
 
     def default(self, args):
         """Process any other commands"""
@@ -129,10 +137,19 @@ class Client_MUD(cmd.Cmd):
         return [self.matches[self.ind]]
 
     def complete_movemonsters(self, text, line, begidx, endidx):
-        """Complete movemonsters attack"""
+        """Complete movemonsters state change"""
         words = (line[:endidx] + ".").split()
         if len(words) == 2:
             DICT = ['on', 'off']
+        else:
+            DICT = []
+        return [c for c in DICT if c.startswith(text)]
+
+    def complete_locale(self, text, line, begidx, endidx):
+        """Complete locale change"""
+        words = (line[:endidx] + ".").split()
+        if len(words) == 2:
+            DICT = ['ru_RU.UTF8', 'en_US.UTF8']
         else:
             DICT = []
         return [c for c in DICT if c.startswith(text)]

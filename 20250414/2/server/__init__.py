@@ -25,6 +25,7 @@ LOCALES = {
     ("ru_RU", "UTF-8"): gettext.translation("mud", "po", ["ru"]),
     ("en_US", "UTF-8"): gettext.NullTranslations()
 }
+locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 
 def _(text):
     return LOCALES[locale.getlocale()].gettext(text)
@@ -56,7 +57,7 @@ class Player:
         """Player is set on (0, 0) position"""
         self.x, self.y = 0, 0
         self.queue = asyncio.Queue()
-        self.lang = ("en_US", "UTF-8")
+        self.lang = locale.getlocale()
 
     def move(self, d_x, d_y):
         """
@@ -68,6 +69,16 @@ class Player:
         self.x = (self.x + d_x) % 10
         self.y = (self.y + d_y) % 10
         return _("Moved to ({x}, {y})\n").format(x=self.x, y=self.y)
+
+    def set_locale(self, args):
+        if args == 'ru_RU.UTF8\n':
+            self.lang = ('ru_RU', 'UTF-8')
+        elif args == 'en_US.UTF8\n':
+            self.lang = ('en_US', 'UTF-8')
+        else:
+            raise Error(1)
+        locale.setlocale(locale.LC_ALL, self.lang)
+        return _("Set up locale: {args}").format(args=args)
 
 
 class Monster:
@@ -90,9 +101,9 @@ class Monster:
 
     def say(self):
         """Return cow with phrase"""
-        global jgsbat
+        global JGSBAT
         if self.cow == 'jgsbat':
-            return cowsay.cowsay(self.phrase, cowfile=jgsbat)
+            return cowsay.cowsay(self.phrase, cowfile=JGSBAT)
         else:
             return cowsay.cowsay(self.phrase, cow=self.cow)
 
@@ -262,11 +273,11 @@ def answer(fun=None, name='', x=0, y=0, hello='', login='', damage=0, state=0, h
             if state == 0:
                 health =_("{name} died\n").format(name=name)
             else:
-                health = _("{name} now has").format(name=name) 
-                         + LOCALES[locale.getlocale()].ngettext(" {hp} point\n", " {hp} points\n", hp).format(hp)
-            return _("{login} attacked {name}").format(login=login, name=name)
-                   + LOCALES[locale.getlocale()].ngettext(", damage {damage} point\n", ", damage {damage} points\n", damage).format(damage)
-                   + health
+                health = (_("{name} now has").format(name=name) 
+                          + LOCALES[locale.getlocale()].ngettext(" {hp} hit point\n", " {hp} hit points\n", hp).format(hp=hp))
+            return (_("{login} attacked {name}").format(login=login, name=name)
+                   + LOCALES[locale.getlocale()].ngettext(", damage {damage} hit point\n", ", damage {damage} hit points\n", damage).format(damage=damage)
+                   + health)
         case 'new':
             return _('New player: {login}').format(login=login)
         case 'left':
@@ -279,13 +290,16 @@ async def send_all(mes='', fun=None, args={}, exception=None):
     mes:str message to be sent
     exception:Player player that dont receive this message
     """
+    default_loc = locale.getlocale()
+    print(default_loc)
     for out in players.values():
+        print(out.lang)
         locale.setlocale(locale.LC_ALL, out.lang)
         if out != exception:
             if fun:
                 mes = answer(fun=fun, **args)
             await out.queue.put(f"{mes}")
-    locale.setlocale(locale.LC_ALL, players[login].lang)
+    locale.setlocale(locale.LC_ALL, default_loc)
 
 async def echo(reader, writer):
     """Run game"""
@@ -343,6 +357,11 @@ async def echo(reader, writer):
                             writer.write(game.set_mode(args).encode())
                         except Error as e:
                             writer.write(e.text.encode())
+                    case ['locale', args]:
+                        try:
+                            writer.write(players[login].set_locale(args).encode())
+                        except Error as e:
+                            writer.write(e.text.encode())
             if request is receive:
                 receive = asyncio.create_task(players[login].queue.get())
                 writer.write(f"{request.result()}\n".encode())
@@ -367,22 +386,30 @@ async def random_monster():
         await asyncio.sleep(30)
         if game.monsters:
             moved = False
-            while not moved:
-                monster = game.monsters[random.choice(list(game.monsters.keys()))]
-                direction = random.choice([(0, 1, _('down')), (1, 0, _('right')), (0, -1, _('up')), (-1, 0, _('left'))])
-                x = (monster.x + direction[0]) % 10
-                y = (monster.y + direction[1]) % 10
-                if (x, y) not in game.monsters:
-                    del game.monsters[(monster.x, monster.y)]
-                    monster.x, monster.y = x, y
-                    game.monsters[(monster.x, monster.y)] = monster
-                    moved = True
-            print(f"{monster.cow} moved one cell {direction[-1]} on {monster.x}, {monster.y}")
-            await send_all(_("{monster} moved one cell {direction}").format(monster = monster.cow,
+            while not moved and any(game.monsters.values()):
+                try:
+                    monster = game.monsters[random.choice(list(game.monsters.keys()))]
+                    direction = random.choice([(0, 1, _('down')), (1, 0, _('right')), (0, -1, _('up')), (-1, 0, _('left'))])
+                    x = (monster.x + direction[0]) % 10
+                    y = (monster.y + direction[1]) % 10
+                    if (x, y) not in game.monsters:
+                        del game.monsters[(monster.x, monster.y)]
+                        monster.x, monster.y = x, y
+                        game.monsters[(monster.x, monster.y)] = monster
+                        moved = True
+                except AttributeError:
+                    print(game.monsters)
+                    print('All monsters are killed before moving')
+                    continue
+            if moved:
+                print(f"{monster.cow} moved one cell {direction[-1]} on {monster.x}, {monster.y}")
+                await send_all(_("{monster} moved one cell {direction}").format(monster = monster.cow,
                                                                             direction = direction[-1]))
-            for i in players.values():
-                if i.x == x and i.y == y:
-                    await i.queue.put(f"{game.encounter(x, y)}")
+                for i in players.values():
+                    if i.x == x and i.y == y:
+                        await i.queue.put(f"{game.encounter(x, y)}")
+            else:
+                print('All monsters are killed before moving')
         else:
             print('No monsters are on the board')
 
