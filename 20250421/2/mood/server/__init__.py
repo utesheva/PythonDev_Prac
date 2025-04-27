@@ -158,7 +158,6 @@ class Game:
         else:
             ans['state'] = 0
         self.monsters[(x, y)] = Monster(x, y, name, hello, hp)
-        print(ans)
         return ans
 
     def attack(self, x, y, weapon, name):
@@ -291,9 +290,7 @@ async def send_all(mes='', fun=None, args={}, exception=None):
     exception:Player player that dont receive this message
     """
     default_loc = locale.getlocale()
-    print(default_loc)
     for out in players.values():
-        print(out.lang)
         locale.setlocale(locale.LC_ALL, out.lang)
         if out != exception:
             if fun:
@@ -322,7 +319,6 @@ async def echo(reader, writer):
         await send_all(fun='new', args={'login':login}, exception=players[login])
 
     me = "{}:{}".format(*writer.get_extra_info('peername'))
-    print(login, me)
 
     while not reader.at_eof():
         done, pending = await asyncio.wait([send, receive], return_when=asyncio.FIRST_COMPLETED)
@@ -370,7 +366,6 @@ async def echo(reader, writer):
     send.cancel()
     receive.cancel()
     writer.close()
-    print(login, "LEFT")
     del players[login]
     await send_all(fun='left', args={'login':login})
     await writer.wait_closed()
@@ -398,20 +393,13 @@ async def random_monster():
                         game.monsters[(monster.x, monster.y)] = monster
                         moved = True
                 except AttributeError:
-                    print(game.monsters)
-                    print('All monsters are killed before moving')
                     continue
             if moved:
-                print(f"{monster.cow} moved one cell {direction[-1]} on {monster.x}, {monster.y}")
                 await send_all(_("{monster} moved one cell {direction}").format(monster = monster.cow,
                                                                             direction = direction[-1]))
                 for i in players.values():
                     if i.x == x and i.y == y:
                         await i.queue.put(f"{game.encounter(x, y)}")
-            else:
-                print('All monsters are killed before moving')
-        else:
-            print('No monsters are on the board')
 
 
 async def main():
@@ -423,3 +411,6 @@ async def main():
     asyncio.create_task(random_monster())
     async with server:
         await server.serve_forever()
+
+def run_server():
+    asyncio.run(main())

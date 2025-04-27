@@ -1,5 +1,6 @@
 """Run sever"""
-from . import main
+from . import run_server
 import asyncio
 
-asyncio.run(main())
+if __name__ == '__main__':
+    run_server()
