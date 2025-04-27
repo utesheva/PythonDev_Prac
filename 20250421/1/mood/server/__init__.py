@@ -423,3 +423,6 @@ async def main():
     asyncio.create_task(random_monster())
     async with server:
         await server.serve_forever()
+
+def run_server():
+    asyncio.run(main())
