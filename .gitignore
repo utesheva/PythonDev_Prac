@@ -3,3 +3,5 @@ _build/
 build/
 *.doctree
 *.pickle
+*.mo
+*.pot
