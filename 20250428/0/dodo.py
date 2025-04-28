@@ -5,7 +5,7 @@ DOIT_CONFIG = {"default_tasks": ['docs']}
 def task_docs():
     """Build docs"""
     return {
-            "file_dep": list(Path(".").glob("*.{py, rst}")),
+            "file_dep": list(Path("./source").glob("*.rst")),
             "actions": ["sphinx-build -M html source _build"],
     }
 
