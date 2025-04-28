@@ -9,6 +9,13 @@ def task_docs():
             "actions": ["sphinx-build -M html source _build"],
     }
 
+def task_zip():
+    """Zip docs"""
+    return {
+            "task_dep": ["docs"],
+            "actions": ["zip -r docs.zip _build/html"]
+    }
+
 def task_erase():
     """Erase all generates and new files"""
     return {
