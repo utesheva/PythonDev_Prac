@@ -10,6 +10,14 @@ def task_docs():
             "actions": ["sphinx-build -M html source _build"],
     }
 
+def task_create_docs():
+    task = ['html', 'text']
+    for i in range(2):
+        yield {'name': f'create {task[i]}',
+               "file_dep": list(Path("./source").glob("*.rst")),
+               "actions": [f"sphinx-build -M {task[i]} source _build"],
+        }
+
 def task_zip():
     """Zip docs"""
     return {
