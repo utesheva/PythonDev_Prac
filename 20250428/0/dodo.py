@@ -1,7 +1,7 @@
 def task_docs():
     """Build docs"""
     return {
-            "actions": ["sphinx-build -M html source build"],
+            "actions": ["sphinx-build -M html source _build"],
     }
 
 def task_erase():
