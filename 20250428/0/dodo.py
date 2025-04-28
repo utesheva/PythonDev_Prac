@@ -1,5 +1,7 @@
 from pathlib import Path
 
+DOIT_CONFIG = {"default_tasks": ['docs']}
+
 def task_docs():
     """Build docs"""
     return {
