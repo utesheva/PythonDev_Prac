@@ -1,6 +1,9 @@
+from os import Path
+
 def task_docs():
     """Build docs"""
     return {
+            "file_dep": list(Path(".").glob("*.{py, rst}")),
             "actions": ["sphinx-build -M html source _build"],
     }
 
