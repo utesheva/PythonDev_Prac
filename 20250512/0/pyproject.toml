@@ -1,0 +1,15 @@
+[project]
+name="Ekaterina"
+description="MUD"
+version="1.0"
+script = "python3 -m server"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+mood="mood"
+
+[tool.setuptools.package-data]
+mood=["pot/*/*/*.mo", "source/*"]
