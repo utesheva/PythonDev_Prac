@@ -25,6 +25,7 @@ LOCALES = {
     ("ru_RU", "UTF-8"): gettext.translation("mud", "po", ["ru"]),
     ("en_US", "UTF-8"): gettext.NullTranslations()
 }
+
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 
 def _(text):

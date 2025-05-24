@@ -6,6 +6,8 @@ import threading
 import cowsay
 import shlex
 import time
+import webbrowser
+from pathlib import Path
 
 cows = cowsay.list_cows() + ['jgsbat']
 
@@ -100,6 +102,10 @@ class Client_MUD(cmd.Cmd):
         args: ru_RU.UTF8 or en_US.UTF8
         """
         self.s.sendall(f"locale {args}\n".encode())
+
+    def do_documentation(self, args):
+        """ Open documentation in browser """
+        webbrowser.open(f"{str(Path(__file__).parents[2])}/_build/html/index.html")
 
     def default(self, args):
         """Process any other commands"""
