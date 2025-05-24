@@ -1,0 +1,94 @@
+# Russian translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-04-20 04:20+0300\n"
+"PO-Revision-Date: 2025-04-20 01:02+0300\n"
+"Last-Translator: Ekaterina Utesheva <utesheva.e.e@gmail.com>\n"
+"Language: ru\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#~ msgid "Invalid arguments"
+#~ msgstr "Неверные аргументы"
+
+#~ msgid "Cannot add unknown monster"
+#~ msgstr "Не возможно добавить неизвестного монстра"
+
+#~ msgid "No {name} here"
+#~ msgstr "В этом месте нет {name}"
+
+#~ msgid "Unknown weapon"
+#~ msgstr "Неизвестное оружие"
+
+#~ msgid "Moved to ({x}, {y})\n"
+#~ msgstr "Передвинулся на ({x}, {y})\n"
+
+#~ msgid "Set up locale: {args}"
+#~ msgstr "Установлена локаль: {args}"
+
+#~ msgid "Moving monsters: {args}"
+#~ msgstr "Перемещение монстров: {args}"
+
+#~ msgid "Replaced the old monster\n"
+#~ msgstr "Заменён старый монстр\n"
+
+#~ msgid ""
+#~ "Added monster {name} to ({x}, {y}) saying {hello}\n"
+#~ "{replaced}"
+#~ msgstr ""
+#~ "Добавлен монстр {name} на ({x}, {y}), говорящий {hello}\n"
+#~ "{replaced}"
+
+#~ msgid "{name} died\n"
+#~ msgstr "{name} умер\n"
+
+#~ msgid "{name} now has"
+#~ msgstr "У {name} теперь"
+
+#~ msgid " {hp} hit point\n"
+#~ msgid_plural " {hp} hit points\n"
+#~ msgstr[0] " {hp} очко здоровья"
+#~ msgstr[1] " {hp} очка здоровья"
+#~ msgstr[2] " {hp} очков здоровья"
+
+#~ msgid "{login} attacked {name}"
+#~ msgstr "{login} атаковал {name}"
+
+#~ msgid ", damage {damage} hit point\n"
+#~ msgid_plural ", damage {damage} hit points\n"
+#~ msgstr[0] ", урон {damage} очко здоровья\n"
+#~ msgstr[1] ", урон {damage} очка здоровья\n"
+#~ msgstr[2] ", урон {damage} очков здоровья\n"
+
+#~ msgid "New player: {login}"
+#~ msgstr "Новый игрок: {login}"
+
+#~ msgid "{login} left"
+#~ msgstr "{login} покинул игру"
+
+#~ msgid "down"
+#~ msgstr "вниз"
+
+#~ msgid "right"
+#~ msgstr "вправо"
+
+#~ msgid "up"
+#~ msgstr "вверх"
+
+#~ msgid "left"
+#~ msgstr "влево"
+
+#~ msgid "{monster} moved one cell {direction}"
+#~ msgstr "{monster} передвинулся на одну клетку {direction}"
+
