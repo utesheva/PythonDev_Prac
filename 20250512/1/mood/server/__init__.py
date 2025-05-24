@@ -6,6 +6,7 @@ import shlex
 import random
 import gettext
 import locale
+from pathlib import Path
 
 COWS = cowsay.list_cows() + ['jgsbat']
 
@@ -22,7 +23,7 @@ JGSBAT = cowsay.read_dot_cow(StringIO(r"""
 """))
 
 LOCALES = {
-    ("ru_RU", "UTF-8"): gettext.translation("mud", "po", ["ru"]),
+    ("ru_RU", "UTF-8"): gettext.translation("mud", str(Path(__file__).parents[2]) + "/po", ["ru"]),
     ("en_US", "UTF-8"): gettext.NullTranslations()
 }
 

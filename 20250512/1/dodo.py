@@ -12,7 +12,7 @@ def task_pot():
 
 def task_po():
     return {
-        'actions': ["pybabel update -l ru --init-missing --ignore-pot-creation-date -D mud -i mud.pot -d po"],
+        'actions': ["pybabel update -l ru --previous --init-missing --ignore-pot-creation-date -D mud -i mud.pot -d po"],
         'file_dep': ['mud.pot'],
         'targets': ["po/ru/LC_MESSAGES/mud.po"],
     }
