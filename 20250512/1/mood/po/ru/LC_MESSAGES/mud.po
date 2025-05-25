@@ -105,23 +105,23 @@ msgstr "Новый игрок: {login}"
 msgid "{login} left"
 msgstr "{login} покинул игру"
 
-#: mood/server/__init__.py:404
+#: mood/server/__init__.py:417
 msgid "down"
 msgstr "вниз"
 
-#: mood/server/__init__.py:404
+#: mood/server/__init__.py:417
 msgid "right"
 msgstr "вправо"
 
-#: mood/server/__init__.py:404
+#: mood/server/__init__.py:417
 msgid "up"
 msgstr "вверх"
 
-#: mood/server/__init__.py:404
+#: mood/server/__init__.py:417
 msgid "left"
 msgstr "влево"
 
-#: mood/server/__init__.py:415
+#: mood/server/__init__.py:428
 #, python-brace-format
 msgid "{monster} moved one cell {direction}"
 msgstr "{monster} передвинулся на одну клетку {direction}"

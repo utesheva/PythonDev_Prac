@@ -301,7 +301,7 @@ def answer(fun=None, name='', x=0, y=0, hello='', login='', damage=0, state=0, h
             return _('New player: {login}').format(login=login)
         case 'left':
             return _("{login} left").format(login=login)
-        case 'sendall':
+        case 'sayall':
             return ("{login}: {message}").format(login=login, message=message)
 
 
@@ -371,7 +371,7 @@ async def echo(reader, writer):
                         d_x, d_y = [int(i) for i in args.split()]
                         locale.setlocale(locale.LC_ALL, players[login].lang)
                         writer.write(game.moving(players[login], d_x, d_y).encode())
-                    case ['sendall', message]:
+                    case ['sayall', message]:
                         args = shlex.split(message)[0]
                         locale.setlocale(locale.LC_ALL, players[login].lang)
                         await send_all(message='{login}: {message}'.format(login=login, message=message), exception=players[login])
@@ -426,7 +426,7 @@ async def random_monster():
                     continue
             if moved:
                 await send_all(message=_("{monster} moved one cell {direction}").format(monster=monster.cow,
-                                                                                direction=direction[-1]))
+                                                                                        direction=direction[-1]))
                 for i in players.values():
                     if i.x == x and i.y == y:
                         await i.queue.put(f"{game.encounter(x, y)}")

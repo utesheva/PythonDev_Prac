@@ -73,7 +73,7 @@ class Client_MUD(cmd.Cmd):
         """Move right"""
         self.s.sendall("move 1 0\n".encode())
 
-    def do_sendall(self, args):
+    def do_sayall(self, args):
         """
         Send message to all users
 

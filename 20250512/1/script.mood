@@ -1,0 +1,4 @@
+movemonsters off
+addmon default coords 0 1 hp 10 hello hi
+down
+attack default with axe
