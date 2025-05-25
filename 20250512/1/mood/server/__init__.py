@@ -268,7 +268,7 @@ def attack_check(args):
     return weapon, name
 
 
-def answer(fun=None, name='', x=0, y=0, hello='', login='', damage=0, state=0, hp=0):
+def answer(fun=None, name='', x=0, y=0, hello='', login='', damage=0, state=0, hp=0, message=''):
     """
     Generate answer to user
 
@@ -301,9 +301,11 @@ def answer(fun=None, name='', x=0, y=0, hello='', login='', damage=0, state=0, h
             return _('New player: {login}').format(login=login)
         case 'left':
             return _("{login} left").format(login=login)
+        case 'sendall':
+            return ("{login}: {message}").format(login=login, message=message)
 
 
-async def send_all(mes='', fun=None, args={}, exception=None):
+async def send_all(message='', fun=None, args={}, exception=None):
     """
     Send message to all users
 
@@ -312,10 +314,12 @@ async def send_all(mes='', fun=None, args={}, exception=None):
     """
     default_loc = locale.getlocale()
     for out in players.values():
-        locale.setlocale(locale.LC_ALL, out.lang)
         if out != exception:
             if fun:
+                locale.setlocale(locale.LC_ALL, out.lang)
                 mes = answer(fun=fun, **args)
+            else:
+                mes = message
             await out.queue.put(f"{mes}")
     locale.setlocale(locale.LC_ALL, default_loc)
 
@@ -348,6 +352,7 @@ async def echo(reader, writer):
                         try:
                             x, y, hp, hello, name = add_monster_check(args)
                         except Error as e:
+                            locale.setlocale(locale.LC_ALL, players[login].lang)
                             writer.write(e.text.encode())
                             continue
                         await send_all(fun='addmon', args=game.add_monster(int(x), int(y), int(hp), hello, name))
@@ -357,24 +362,32 @@ async def echo(reader, writer):
                             weapon, name = attack_check(args)
                             result = game.attack(x, y, int(weapon), name)
                             result['login'] = login
+                            locale.setlocale(locale.LC_ALL, players[login].lang)
                             await send_all(fun='attack', args=result)
                         except Error as e:
+                            locale.setlocale(locale.LC_ALL, players[login].lang)
                             writer.write(e.text.encode())
                     case ['move', args]:
                         d_x, d_y = [int(i) for i in args.split()]
+                        locale.setlocale(locale.LC_ALL, players[login].lang)
                         writer.write(game.moving(players[login], d_x, d_y).encode())
-                    case ['sendall', args]:
-                        args = shlex.split(args)[0]
-                        await send_all(mes="{login}: {args}", exception=players[login])
+                    case ['sendall', message]:
+                        args = shlex.split(message)[0]
+                        locale.setlocale(locale.LC_ALL, players[login].lang)
+                        await send_all(message='{login}: {message}'.format(login=login, message=message), exception=players[login])
                     case ['movemonsters', args]:
                         try:
+                            locale.setlocale(locale.LC_ALL, players[login].lang)
                             writer.write(game.set_mode(args).encode())
                         except Error as e:
+                            locale.setlocale(locale.LC_ALL, players[login].lang)
                             writer.write(e.text.encode())
                     case ['locale', args]:
                         try:
+                            locale.setlocale(locale.LC_ALL, players[login].lang)
                             writer.write(players[login].set_locale(args).encode())
                         except Error as e:
+                            locale.setlocale(locale.LC_ALL, players[login].lang)
                             writer.write(e.text.encode())
             if request is receive:
                 receive = asyncio.create_task(players[login].queue.get())
@@ -412,7 +425,7 @@ async def random_monster():
                 except AttributeError:
                     continue
             if moved:
-                await send_all(_("{monster} moved one cell {direction}").format(monster=monster.cow,
+                await send_all(message=_("{monster} moved one cell {direction}").format(monster=monster.cow,
                                                                                 direction=direction[-1]))
                 for i in players.values():
                     if i.x == x and i.y == y:

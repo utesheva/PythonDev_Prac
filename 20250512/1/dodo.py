@@ -58,13 +58,13 @@ def task_erase():
 def task_sdist():
     """Make sdist"""
     return {
-            'task_dep': ['html', 'erase']
+            'task_dep': ['html', 'erase'],
             'actions': ['python3 -m build -s -n']
     }
 
 def task_wheel():
     """Make wheel"""
     return {
-            'task_dep': ['html']
+            'task_dep': ['html'],
             'actions': ['python3 -m build -w']
     }

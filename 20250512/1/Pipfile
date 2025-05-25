@@ -4,9 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-python-cowsay = "*"
 build = "*"
 doit = "*"
+python-cowsay = "*"
+sphinx = "*"
+setuptools = "*"
+flake8 = "*"
 
 [dev-packages]
 build = "*"
