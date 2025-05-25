@@ -1,8 +1,7 @@
+"""Cmd for client"""
 import cmd
 import readline
 import sys
-import socket
-import threading
 import cowsay
 import shlex
 import time
@@ -27,7 +26,8 @@ class Client_MUD(cmd.Cmd):
         return super().__init__(*args, **kwargs)
 
     def precmd(self, line):
-        if not self.stdin is sys.stdin:
+        """Before game is started"""
+        if self.stdin is not sys.stdin:
             time.sleep(1)
         return super().precmd(line)
 
@@ -82,19 +82,21 @@ class Client_MUD(cmd.Cmd):
         self.s.sendall(f"sendall {args}\n".encode())
 
     def do_EOF(self, args):
+        """End the game by Ctrl+D"""
         return 1
-    
+
     def emptyline(self):
-        return 
+        """Do nothing after emptyline"""
+        return
 
     def do_movemonsters(self, args):
         """
-        Turning on/off wandering monsters.
+        Turn on/off wandering monsters.
 
         args:str on or off
         """
         self.s.sendall(f"movemonsters {args}\n".encode())
-    
+
     def do_locale(self, args):
         """
         Change locale
@@ -104,7 +106,7 @@ class Client_MUD(cmd.Cmd):
         self.s.sendall(f"locale {args}\n".encode())
 
     def do_documentation(self, args):
-        """ Open documentation in browser """
+        """Open documentation in browser"""
         webbrowser.open(f"{str(Path(__file__).parents[2])}/_build/html/index.html")
 
     def default(self, args):
@@ -159,7 +161,7 @@ class Client_MUD(cmd.Cmd):
         else:
             DICT = []
         return [c for c in DICT if c.startswith(text)]
-    
+
     def from_srv(self, cmdline, s):
         """
         Print all messages from the server
@@ -169,5 +171,3 @@ class Client_MUD(cmd.Cmd):
         """
         while response := s.recv(1024).rstrip().decode():
             print(f"\n{response}\n{cmdline.prompt}{readline.get_line_buffer()}", end="", flush=True)
-
-

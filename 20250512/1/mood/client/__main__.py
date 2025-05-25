@@ -1,6 +1,11 @@
-from . import *
+from . import Client_MUD
+import sys
+import socket
+import threading
 
-if __name__ == '__main__':
+
+def run_client():
+    """Run client"""
     if len(sys.argv) > 3 and sys.argv[2] == '--file':
         file = open(sys.argv[3])
     else:
@@ -29,3 +34,6 @@ if __name__ == '__main__':
     if file:
         file.close()
 
+
+if __name__ == '__main__':
+    run_client()

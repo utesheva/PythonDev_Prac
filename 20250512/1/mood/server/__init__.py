@@ -29,6 +29,7 @@ LOCALES = {
 
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 
+
 def _(text):
     return LOCALES[locale.getlocale()].gettext(text)
 
@@ -73,6 +74,11 @@ class Player:
         return _("Moved to ({x}, {y})\n").format(x=self.x, y=self.y)
 
     def set_locale(self, args):
+        """
+        Set language
+
+        args: ru_RU.UTF8  or en_US.UTF8
+        """
         if args == 'ru_RU.UTF8\n':
             self.lang = ('ru_RU', 'UTF-8')
         elif args == 'en_US.UTF8\n':
@@ -103,7 +109,6 @@ class Monster:
 
     def say(self):
         """Return cow with phrase"""
-        global JGSBAT
         if self.cow == 'jgsbat':
             return cowsay.cowsay(self.phrase, cowfile=JGSBAT)
         else:
@@ -152,7 +157,7 @@ class Game:
         hello:str phrase to be said by monster
         name:str name of the monster
         """
-        ans = {'name': name, 
+        ans = {'name': name,
                'x': x, 'y': y,
                'hello': hello}
         if (x, y) in self.monsters and not (self.monsters[(x, y)] is None):
@@ -262,27 +267,41 @@ def attack_check(args):
     name = splitted[0]
     return weapon, name
 
+
 def answer(fun=None, name='', x=0, y=0, hello='', login='', damage=0, state=0, hp=0):
+    """
+    Generate answer to user
+
+    name: str name of monster
+    x: int
+    y: int
+    hello: str monster's greeting
+    login: str user
+    damage: int
+    state: int shows state of monster
+    hp: int hp of monster
+    """
     match fun:
         case 'addmon':
-            replaced = '' if state == 0 else _("Replaced the old monster\n") 
+            replaced = '' if state == 0 else _("Replaced the old monster\n")
             return _("Added monster {name} to ({x}, {y}) saying {hello}\n{replaced}").format(name=name,
                                                                                              x=x, y=y,
                                                                                              hello=hello,
                                                                                              replaced=replaced)
         case 'attack':
             if state == 0:
-                health =_("{name} died\n").format(name=name)
+                health = _("{name} died\n").format(name=name)
             else:
-                health = (_("{name} now has").format(name=name) 
+                health = (_("{name} now has").format(name=name)
                           + LOCALES[locale.getlocale()].ngettext(" {hp} hit point\n", " {hp} hit points\n", hp).format(hp=hp))
             return (_("{login} attacked {name}").format(login=login, name=name)
-                   + LOCALES[locale.getlocale()].ngettext(", damage {damage} hit point\n", ", damage {damage} hit points\n", damage).format(damage=damage)
-                   + health)
+                    + LOCALES[locale.getlocale()].ngettext(", damage {damage} hit point\n", ", damage {damage} hit points\n", damage).format(damage=damage)
+                    + health)
         case 'new':
             return _('New player: {login}').format(login=login)
         case 'left':
             return _("{login} left").format(login=login)
+
 
 async def send_all(mes='', fun=None, args={}, exception=None):
     """
@@ -300,10 +319,9 @@ async def send_all(mes='', fun=None, args={}, exception=None):
             await out.queue.put(f"{mes}")
     locale.setlocale(locale.LC_ALL, default_loc)
 
+
 async def echo(reader, writer):
     """Run game"""
-    global game, players
-
     send = asyncio.create_task(reader.readline())
 
     await asyncio.wait_for(send, timeout=None)
@@ -318,9 +336,7 @@ async def echo(reader, writer):
         players[login] = Player()
         receive = asyncio.create_task(players[login].queue.get())
         writer.write("1".encode())
-        await send_all(fun='new', args={'login':login}, exception=players[login])
-
-    me = "{}:{}".format(*writer.get_extra_info('peername'))
+        await send_all(fun='new', args={'login': login}, exception=players[login])
 
     while not reader.at_eof():
         done, pending = await asyncio.wait([send, receive], return_when=asyncio.FIRST_COMPLETED)
@@ -341,7 +357,7 @@ async def echo(reader, writer):
                             weapon, name = attack_check(args)
                             result = game.attack(x, y, int(weapon), name)
                             result['login'] = login
-                            await send_all(fun = 'attack', args=result)
+                            await send_all(fun='attack', args=result)
                         except Error as e:
                             writer.write(e.text.encode())
                     case ['move', args]:
@@ -369,13 +385,12 @@ async def echo(reader, writer):
     receive.cancel()
     writer.close()
     del players[login]
-    await send_all(fun='left', args={'login':login})
+    await send_all(fun='left', args={'login': login})
     await writer.wait_closed()
 
 
 async def random_monster():
     """Generate wandering monster"""
-    global game, players
     while True:
         if not game.mode:
             await asyncio.sleep(5)
@@ -397,15 +412,15 @@ async def random_monster():
                 except AttributeError:
                     continue
             if moved:
-                await send_all(_("{monster} moved one cell {direction}").format(monster = monster.cow,
-                                                                            direction = direction[-1]))
+                await send_all(_("{monster} moved one cell {direction}").format(monster=monster.cow,
+                                                                                direction=direction[-1]))
                 for i in players.values():
                     if i.x == x and i.y == y:
                         await i.queue.put(f"{game.encounter(x, y)}")
 
 
 async def main():
-    """Run server"""
+    """Start server"""
     global game, players
     game = Game()
     players = {}
@@ -414,5 +429,7 @@ async def main():
     async with server:
         await server.serve_forever()
 
+
 def run_server():
+    """Run server"""
     asyncio.run(main())

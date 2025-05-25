@@ -4,18 +4,22 @@ DOIT_CONFIG = {"default_tasks": ['html']}
 
 
 def task_pot():
+    """Build pot"""
     return {
         'actions': ["pybabel extract -o mud.pot po"],
         'file_dep': [str(i) for i in Path("./mood/server").glob("*.py")],
         'targets': ["mud.pot"],
     }
 
+
 def task_po():
+    """Build po"""
     return {
         'actions': ["pybabel update -l ru --previous --init-missing --ignore-pot-creation-date -D mud -i mud.pot -d po"],
         'file_dep': ['mud.pot'],
         'targets': ["po/ru/LC_MESSAGES/mud.po"],
     }
+
 
 def task_il8n():
     """Build il8n"""

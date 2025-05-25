@@ -20,13 +20,14 @@ tux = r'''Moved to (0, 1)
     \___)=(___/
 '''
 
+
 class TestSrv(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.proc = multiprocessing.Process(target=srv.run_server)
         cls.proc.start()
-        time.sleep(1) 
-    
+        time.sleep(1)
+
     def setUp(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.connect(('localhost', 1337))
@@ -74,4 +75,3 @@ class TestSrv(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.proc.terminate()
-
