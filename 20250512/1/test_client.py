@@ -2,6 +2,7 @@ import unittest
 import mood.client as client
 from unittest.mock import MagicMock, patch
 
+
 class TestClient(unittest.TestCase):
     def setUp(self):
         self.mocker = MagicMock()
@@ -28,9 +29,6 @@ class TestClient(unittest.TestCase):
             error_message = mock_print.call_args[0][0]
             self.assertIn("Invalid command", error_message)
 
-
     def tearDown(self):
         """Очистка после каждого теста"""
         self.mocker.reset_mock()
-
-
