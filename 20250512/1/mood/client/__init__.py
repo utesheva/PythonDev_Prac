@@ -107,7 +107,7 @@ class Client_MUD(cmd.Cmd):
 
     def do_documentation(self, args):
         """Open documentation in browser"""
-        webbrowser.open(f"{str(Path(__file__).parents[2])}/_build/html/index.html")
+        webbrowser.open(f"{str(Path(__file__).parents[1])}/_build/html/index.html")
 
     def default(self, args):
         """Process any other commands"""

@@ -6,27 +6,27 @@ DOIT_CONFIG = {"default_tasks": ['html']}
 def task_pot():
     """Build pot"""
     return {
-        'actions': ["pybabel extract -o mud.pot po"],
+        'actions': ["pybabel extract -o mood/mud.pot mood"],
         'file_dep': [str(i) for i in Path("./mood/server").glob("*.py")],
-        'targets': ["mud.pot"],
+        'targets': ["mood/mud.pot"],
     }
 
 
 def task_po():
     """Build po"""
     return {
-        'actions': ["pybabel update -l ru --previous --init-missing --ignore-pot-creation-date -D mud -i mud.pot -d po"],
-        'file_dep': ['mud.pot'],
-        'targets': ["po/ru/LC_MESSAGES/mud.po"],
+        'actions': ["pybabel update -l ru --previous --init-missing --ignore-pot-creation-date -D mud -i mood/mud.pot -d mood/po"],
+        'file_dep': ['mood/mud.pot'],
+        'targets': ["mood/po/ru/LC_MESSAGES/mud.po"],
     }
 
 
 def task_il8n():
     """Build il8n"""
     return {
-            "file_dep": ['po/ru/LC_MESSAGES/mud.po'],
-            "actions": ["pybabel compile -D mud -l ru -i po/ru/LC_MESSAGES/mud.po -d po"],
-            "targets": ['po/ru/LC_MESSAGES/mud.mo']
+            "file_dep": ['mood/po/ru/LC_MESSAGES/mud.po'],
+            "actions": ["pybabel compile -D mud -l ru -i mood/po/ru/LC_MESSAGES/mud.po -d mood/po"],
+            "targets": ['mood/po/ru/LC_MESSAGES/mud.mo']
     }
 
 
@@ -35,8 +35,8 @@ def task_html():
     return {
             "file_dep": [str(i) for i in Path("./source").glob("*.rst")],
             'task_dep': ['test'],
-            "actions": ["sphinx-build -M html source _build"],
-            'targets': ['_build/html/index.html'],
+            "actions": ["sphinx-build -M html docs mood/_build"],
+            'targets': ['mood/_build/html/index.html'],
     }
 
 

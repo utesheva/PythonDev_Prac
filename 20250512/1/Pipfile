@@ -6,14 +6,15 @@ name = "pypi"
 [packages]
 python-cowsay = "*"
 build = "*"
+doit = "*"
 
 [dev-packages]
 build = "*"
 setuptools = {extras = ["core"], version = "*"}
-sphinx = "*"
 doit = "*"
 flake8 = "*"
 pydocstyle = "*"
+sphinx = "*"
 
 [requires]
 python_version = "3.12"
